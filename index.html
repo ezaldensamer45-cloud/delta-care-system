@@ -10,7 +10,7 @@ body{
 font-family: Arial;
 background: #0f172a url("WhatsApp%20Image%202026-04-12%20at%205.54.37%20PM.jpeg") center/cover no-repeat;
 color:white;
-padding:20px;
+margin:0;
 }
 
 .overlay{
@@ -45,7 +45,16 @@ border-radius:6px;
 
 <body>
 
-<div class="overlay">
+<!-- LOGIN -->
+<div id="loginBox" style="text-align:center;">
+<h2>Login</h2>
+<input id="user" placeholder="Username"><br>
+<input id="pass" type="password" placeholder="Password"><br>
+<button onclick="login()">Login</button>
+</div>
+
+<!-- APP -->
+<div id="app" class="overlay" style="display:none;">
 
 <h2>Delta Care System</h2>
 
@@ -92,6 +101,24 @@ border-radius:6px;
 <script>
 
 let patients = JSON.parse(localStorage.getItem("patients")) || [];
+let users = JSON.parse(localStorage.getItem("users")) || [
+{user:"admin", pass:"1234"}
+];
+
+function login(){
+let u = document.getElementById("user").value;
+let p = document.getElementById("pass").value;
+
+let found = users.find(x=>x.user===u && x.pass===p);
+
+if(found){
+document.getElementById("loginBox").style.display="none";
+document.getElementById("app").style.display="block";
+display();
+}else{
+alert("Wrong login");
+}
+}
 
 function addPatient(){
 
@@ -137,7 +164,18 @@ images: imgs
 patients.push(p);
 localStorage.setItem("patients", JSON.stringify(patients));
 
+clearFields();
 display();
+}
+
+function clearFields(){
+document.getElementById("name").value="";
+document.getElementById("age").value="";
+document.getElementById("doctor").value="";
+document.getElementById("price").value="";
+document.getElementById("materials").value="";
+document.getElementById("mprice").value="";
+document.getElementById("images").value="";
 }
 
 function deletePatient(i){
@@ -193,8 +231,6 @@ ${(p.images || []).map(img => `<img src="${img}" width="120">`).join("")}
 
 });
 }
-
-display();
 
 </script>
 
