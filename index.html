@@ -2,19 +2,18 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Delta Care System</title>
 
 <style>
 body{
 font-family: Arial;
-background: #0f172a url("WhatsApp%20Image%202026-04-12%20at%205.54.37%20PM.jpeg") center/cover no-repeat;
+background:#0f172a url("WhatsApp%20Image%202026-04-12%20at%205.54.37%20PM.jpeg") center/cover no-repeat;
 color:white;
 margin:0;
 }
 
 .overlay{
-background: rgba(0,0,0,0.75);
+background:rgba(0,0,0,0.75);
 min-height:100vh;
 padding:20px;
 }
@@ -58,6 +57,8 @@ border-radius:6px;
 
 <h2>Delta Care System</h2>
 
+<button onclick="openSettings()">⚙️ Settings</button>
+
 <h3>Add Patient</h3>
 
 <input id="name" placeholder="Name">
@@ -98,22 +99,50 @@ border-radius:6px;
 
 </div>
 
+<!-- SETTINGS -->
+<div id="settingsBox" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:black; padding:20px; overflow:auto;">
+
+<h2>Settings</h2>
+
+<h3>Change Admin</h3>
+<input id="newUser" placeholder="New Username">
+<input id="newPass" placeholder="New Password">
+<button onclick="changeUser()">Save</button>
+
+<hr>
+
+<h3>Add User</h3>
+<input id="addUserName" placeholder="Username">
+<input id="addUserPass" placeholder="Password">
+<button onclick="addUser()">Add</button>
+
+<hr>
+
+<h3>Users</h3>
+<div id="usersList"></div>
+
+<br>
+<button onclick="closeSettings()">Close</button>
+
+</div>
+
 <script>
 
 let patients = JSON.parse(localStorage.getItem("patients")) || [];
+
 let users = JSON.parse(localStorage.getItem("users")) || [
 {user:"admin", pass:"1234"}
 ];
 
 function login(){
-let u = document.getElementById("user").value;
-let p = document.getElementById("pass").value;
+let u = user.value;
+let p = pass.value;
 
 let found = users.find(x=>x.user===u && x.pass===p);
 
 if(found){
-document.getElementById("loginBox").style.display="none";
-document.getElementById("app").style.display="block";
+loginBox.style.display="none";
+app.style.display="block";
 display();
 }else{
 alert("Wrong login");
@@ -125,7 +154,7 @@ function addPatient(){
 let files = document.getElementById("images").files;
 let imgs = [];
 
-if(files.length === 0){
+if(files.length===0){
 savePatient([]);
 return;
 }
@@ -137,7 +166,7 @@ let reader = new FileReader();
 reader.onload = function(e){
 imgs.push(e.target.result);
 
-if(imgs.length === Math.min(files.length,10)){
+if(imgs.length===Math.min(files.length,10)){
 savePatient(imgs);
 }
 }
@@ -149,16 +178,16 @@ reader.readAsDataURL(files[i]);
 function savePatient(imgs){
 
 let p = {
-name: document.getElementById("name").value,
-age: document.getElementById("age").value,
-doctor: document.getElementById("doctor").value,
-type: document.getElementById("type").value,
-place: document.getElementById("place").value,
-date: document.getElementById("date").value,
-price: document.getElementById("price").value,
-materials: document.getElementById("materials").value,
-mprice: document.getElementById("mprice").value,
-images: imgs
+name:name.value,
+age:age.value,
+doctor:doctor.value,
+type:type.value,
+place:place.value,
+date:date.value,
+price:price.value,
+materials:materials.value,
+mprice:mprice.value,
+images:imgs
 };
 
 patients.push(p);
@@ -169,13 +198,13 @@ display();
 }
 
 function clearFields(){
-document.getElementById("name").value="";
-document.getElementById("age").value="";
-document.getElementById("doctor").value="";
-document.getElementById("price").value="";
-document.getElementById("materials").value="";
-document.getElementById("mprice").value="";
-document.getElementById("images").value="";
+name.value="";
+age.value="";
+doctor.value="";
+price.value="";
+materials.value="";
+mprice.value="";
+images.value="";
 }
 
 function deletePatient(i){
@@ -185,27 +214,23 @@ display();
 }
 
 function toggle(i){
-let d = document.getElementById("details-"+i);
-d.style.display = d.style.display === "none" ? "block" : "none";
+let d=document.getElementById("details-"+i);
+d.style.display=d.style.display==="none"?"block":"none";
 }
 
 function display(){
 
-let s = document.getElementById("search").value.toLowerCase();
-let list = document.getElementById("list");
-
-list.innerHTML = "";
+let s=search.value.toLowerCase();
+list.innerHTML="";
 
 patients
-.filter(p => p.name.toLowerCase().includes(s))
+.filter(p=>p.name.toLowerCase().includes(s))
 .forEach((p,i)=>{
 
-list.innerHTML += `
+list.innerHTML+=`
 <div class="card">
 
-<h3 onclick="toggle(${i})" style="cursor:pointer;">
-${p.name}
-</h3>
+<h3 onclick="toggle(${i})">${p.name}</h3>
 
 <div id="details-${i}" style="display:none;">
 
@@ -213,23 +238,74 @@ ${p.name}
 <p>Doctor: ${p.doctor}</p>
 <p>Type: ${p.type}</p>
 <p>Place: ${p.place}</p>
-<p>Date: ${p.date || "—"}</p>
+<p>Date: ${p.date||"-"}</p>
 <p>Session: ${p.price} IQD</p>
 <p>Materials: ${p.materials}</p>
-<p>Materials Cost: ${p.mprice} IQD</p>
+<p>Materials Cost: ${p.mprice}</p>
 
 <div>
-${(p.images || []).map(img => `<img src="${img}" width="120">`).join("")}
+${(p.images||[]).map(img=>`<img src="${img}" width="100">`).join("")}
 </div>
 
 <button onclick="deletePatient(${i})">Delete</button>
 
 </div>
-
 </div>
 `;
-
 });
+}
+
+// SETTINGS
+function openSettings(){
+settingsBox.style.display="block";
+loadUsers();
+}
+
+function closeSettings(){
+settingsBox.style.display="none";
+}
+
+function changeUser(){
+let u=newUser.value;
+let p=newPass.value;
+
+if(u&&p){
+users[0]={user:u,pass:p};
+localStorage.setItem("users",JSON.stringify(users));
+alert("Updated");
+}
+}
+
+function addUser(){
+let u=addUserName.value;
+let p=addUserPass.value;
+
+if(u&&p){
+users.push({user:u,pass:p});
+localStorage.setItem("users",JSON.stringify(users));
+loadUsers();
+}
+}
+
+function loadUsers(){
+usersList.innerHTML="";
+users.forEach((u,i)=>{
+usersList.innerHTML+=`
+<div>
+${u.user}
+<button onclick="deleteUser(${i})">Delete</button>
+</div>`;
+});
+}
+
+function deleteUser(i){
+if(i===0){
+alert("Admin cannot be deleted");
+return;
+}
+users.splice(i,1);
+localStorage.setItem("users",JSON.stringify(users));
+loadUsers();
 }
 
 </script>
