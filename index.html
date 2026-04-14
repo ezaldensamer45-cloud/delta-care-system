@@ -6,18 +6,27 @@
 <title>Delta Care System</title>
 
 <style>
-body {font-family: Arial; background:#0f172a; color:white; padding:20px;}
-.light {background:#f1f5f9; color:black;}
-input, select {padding:8px; margin:5px;}
-button {padding:8px 15px; cursor:pointer;}
-.card {background:#1e293b; padding:10px; margin:10px 0; border-radius:8px;}
-.light .card {background:white;}
+body { font-family: Arial; background:#0f172a; color:white; padding:20px; }
+.light { background:#f1f5f9; color:black; }
+
+input, select { padding:8px; margin:5px; }
+button { padding:8px 15px; cursor:pointer; }
+
+.card {
+  background:#1e293b;
+  padding:10px;
+  margin:10px 0;
+  border-radius:8px;
+}
+
+.light .card { background:white; }
 </style>
 </head>
 
 <body>
 
 <h2>Delta Care System</h2>
+
 <button onclick="toggleMode()">🌙 / ☀️</button>
 
 <h3>Add Patient</h3>
@@ -27,92 +36,101 @@ button {padding:8px 15px; cursor:pointer;}
 <input id="doctor" placeholder="Referring Doctor">
 
 <select id="type">
-<option>Complex wounds</option>
-<option>Rabea</option>
+  <option>Complex wounds</option>
+  <option>Simple wounds</option>
 </select>
 
 <input id="price" placeholder="Session Price">
 <input id="materials" placeholder="Materials">
 <input id="mprice" placeholder="Materials Price">
 
-<br>
 <button onclick="addPatient()">Add</button>
 
 <hr>
 
 <h3>Search</h3>
-<input id="search" placeholder="Search...">
+<input id="search" placeholder="Search..." oninput="display()">
 
 <div id="list"></div>
 
 <script>
+let patients = [];
 
-let patients = JSON.parse(localStorage.getItem("patients")) || [];
-
-function save(){
-localStorage.setItem("patients", JSON.stringify(patients));
+// جلب البيانات من السيرفر
+async function loadPatients(){
+  let res = await fetch("https://delta-care-api.onrender.com/patients");
+  patients = await res.json();
+  display();
 }
 
-function addPatient(){
-let p = {
-name: document.getElementById("name").value,
-age: document.getElementById("age").value,
-doctor: document.getElementById("doctor").value,
-type: document.getElementById("type").value,
-price: document.getElementById("price").value,
-materials: document.getElementById("materials").value,
-mprice: document.getElementById("mprice").value
-};
+// إضافة مريض
+async function addPatient(){
+  let p = {
+    name: document.getElementById("name").value,
+    age: document.getElementById("age").value,
+    doctor: document.getElementById("doctor").value,
+    type: document.getElementById("type").value,
+    price: document.getElementById("price").value,
+    materials: document.getElementById("materials").value,
+    mprice: document.getElementById("mprice").value
+  };
 
-patients.push(p);
-save();
-display();
-clearInputs();
+  await fetch("https://delta-care-api.onrender.com/patients", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(p)
+  });
+
+  loadPatients();
+
+  // تفريغ الحقول
+  document.getElementById("name").value="";
+  document.getElementById("age").value="";
+  document.getElementById("doctor").value="";
+  document.getElementById("price").value="";
+  document.getElementById("materials").value="";
+  document.getElementById("mprice").value="";
 }
 
-function clearInputs(){
-document.getElementById("name").value="";
-document.getElementById("age").value="";
-document.getElementById("doctor").value="";
-document.getElementById("price").value="";
-document.getElementById("materials").value="";
-document.getElementById("mprice").value="";
+// حذف مريض
+async function deletePatient(id){
+  await fetch("https://delta-care-api.onrender.com/patients/" + id, {
+    method: "DELETE"
+  });
+  loadPatients();
 }
 
+// عرض المرضى
 function display(){
-let s = document.getElementById("search").value.toLowerCase();
-let list = document.getElementById("list");
-list.innerHTML="";
+  let s = document.getElementById("search").value.toLowerCase();
+  let list = document.getElementById("list");
+  list.innerHTML = "";
 
-patients.filter(p=>p.name.toLowerCase().includes(s)).forEach((p,i)=>{
-list.innerHTML+=`
-<div class="card">
-<h3>${p.name}</h3>
-<p>Age: ${p.age}</p>
-<p>Doctor: ${p.doctor}</p>
-<p>Type: ${p.type}</p>
-<p>Session: ${p.price} IQD</p>
-<p>Materials: ${p.materials}</p>
-<p>Materials Cost: ${p.mprice} IQD</p>
-<button onclick="deletePatient(${i})">Delete</button>
-</div>`;
-});
+  patients
+    .filter(p => p.name.toLowerCase().includes(s))
+    .forEach(p => {
+      list.innerHTML += `
+        <div class="card">
+          <h3>${p.name}</h3>
+          <p>Age: ${p.age}</p>
+          <p>Doctor: ${p.doctor}</p>
+          <p>Type: ${p.type}</p>
+          <p>Session: ${p.price} IQD</p>
+          <p>Materials: ${p.materials}</p>
+          <p>Materials Cost: ${p.mprice} IQD</p>
+          <button onclick="deletePatient('${p._id}')">Delete</button>
+        </div>
+      `;
+    });
 }
 
-function deletePatient(i){
-patients.splice(i,1);
-save();
-display();
-}
-
-document.getElementById("search").addEventListener("input", display);
-
+// دارك / لايت مود
 function toggleMode(){
-document.body.classList.toggle("light");
+  document.body.classList.toggle("light");
 }
 
-display();
-
+// تشغيل أول مرة
+loadPatients();
 </script>
 
 </body>
