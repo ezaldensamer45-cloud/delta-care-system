@@ -14,7 +14,7 @@ padding:20px;
 }
 
 .overlay{
-background: rgba(0,0,0,0.7);
+background: rgba(0,0,0,0.75);
 min-height:100vh;
 padding:20px;
 }
@@ -159,7 +159,7 @@ let list = document.getElementById("list");
 list.innerHTML = "";
 
 patients
-.filter(p=>p.name.toLowerCase().includes(s))
+.filter(p => p.name.toLowerCase().includes(s))
 .forEach((p,i)=>{
 
 list.innerHTML += `
@@ -175,18 +175,19 @@ ${p.name}
 <p>Doctor: ${p.doctor}</p>
 <p>Type: ${p.type}</p>
 <p>Place: ${p.place}</p>
-<p>Date: ${p.date}</p>
+<p>Date: ${p.date || "—"}</p>
 <p>Session: ${p.price} IQD</p>
 <p>Materials: ${p.materials}</p>
 <p>Materials Cost: ${p.mprice} IQD</p>
 
 <div>
-${(p.images || []).map(img => `<img src="${img}" width="100">`).join("")}
+${(p.images || []).map(img => `<img src="${img}" width="120">`).join("")}
 </div>
 
 <button onclick="deletePatient(${i})">Delete</button>
 
 </div>
+
 </div>
 `;
 
