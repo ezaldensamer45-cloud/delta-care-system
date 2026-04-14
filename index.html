@@ -6,7 +6,7 @@
 <title>Delta Care System</title>
 
 <style>
-body {font-family: Arial; background:#0f172a; color:white; margin:0; padding:20px;}
+body {font-family: Arial; background:#0f172a; color:white; padding:20px;}
 .light {background:#f1f5f9; color:black;}
 input, select {padding:8px; margin:5px;}
 button {padding:8px 15px; cursor:pointer;}
@@ -41,7 +41,7 @@ button {padding:8px 15px; cursor:pointer;}
 <hr>
 
 <h3>Search</h3>
-<input id="search" onkeyup="display()" placeholder="Search...">
+<input id="search" placeholder="Search...">
 
 <div id="list"></div>
 
@@ -55,13 +55,13 @@ localStorage.setItem("patients", JSON.stringify(patients));
 
 function addPatient(){
 let p = {
-name: name.value,
-age: age.value,
-doctor: doctor.value,
-type: type.value,
-price: price.value,
-materials: materials.value,
-mprice: mprice.value
+name: document.getElementById("name").value,
+age: document.getElementById("age").value,
+doctor: document.getElementById("doctor").value,
+type: document.getElementById("type").value,
+price: document.getElementById("price").value,
+materials: document.getElementById("materials").value,
+mprice: document.getElementById("mprice").value
 };
 
 patients.push(p);
@@ -71,16 +71,17 @@ clearInputs();
 }
 
 function clearInputs(){
-name.value="";
-age.value="";
-doctor.value="";
-price.value="";
-materials.value="";
-mprice.value="";
+document.getElementById("name").value="";
+document.getElementById("age").value="";
+document.getElementById("doctor").value="";
+document.getElementById("price").value="";
+document.getElementById("materials").value="";
+document.getElementById("mprice").value="";
 }
 
 function display(){
-let s = search.value.toLowerCase();
+let s = document.getElementById("search").value.toLowerCase();
+let list = document.getElementById("list");
 list.innerHTML="";
 
 patients.filter(p=>p.name.toLowerCase().includes(s)).forEach((p,i)=>{
@@ -93,7 +94,6 @@ list.innerHTML+=`
 <p>Session: ${p.price} IQD</p>
 <p>Materials: ${p.materials}</p>
 <p>Materials Cost: ${p.mprice} IQD</p>
-
 <button onclick="deletePatient(${i})">Delete</button>
 </div>`;
 });
@@ -104,6 +104,8 @@ patients.splice(i,1);
 save();
 display();
 }
+
+document.getElementById("search").addEventListener("input", display);
 
 function toggleMode(){
 document.body.classList.toggle("light");
