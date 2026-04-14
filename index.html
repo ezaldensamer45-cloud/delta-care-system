@@ -17,40 +17,50 @@ body {
 body::before {
   content: "";
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(15, 23, 42, 0.85);
-  z-index: -1;
+  top:0;left:0;
+  width:100%;height:100%;
+  background: rgba(15,23,42,0.85);
+  z-index:-1;
 }
 
+/* لوجو تحت */
+.logo-bg {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 250px;
+  opacity: 0.15;
+}
+
+/* لايت مود */
 .light {
-  background: #f1f5f9;
-  color: black;
+  background:#f1f5f9;
+  color:black;
 }
 
 input, select {
-  padding: 8px;
-  margin: 5px;
+  padding:8px;
+  margin:5px;
 }
 
 button {
-  padding: 8px 15px;
-  cursor: pointer;
+  padding:8px 15px;
+  cursor:pointer;
 }
 
 .card {
-  background: #1e293b;
-  padding: 10px;
-  margin: 10px 0;
-  border-radius: 8px;
+  background:#1e293b;
+  padding:10px;
+  margin:10px 0;
+  border-radius:8px;
 }
 </style>
-
 </head>
 
 <body>
+
+<!-- اللوجو -->
+<img src="https://raw.githubusercontent.com/ezaldensamer45-cloud/delta-care-system/main/WhatsApp%20Image%202026-04-12%20at%205.54.37%20PM.jpeg" class="logo-bg">
 
 <h2>Delta Care System</h2>
 
@@ -63,15 +73,15 @@ button {
 <input id="doctor" placeholder="Doctor">
 
 <select id="type">
-  <option>Complex wounds</option>
-  <option>Burns</option>
-  <option>Diabetic foot</option>
+<option>Complex wounds</option>
+<option>Burns</option>
+<option>Diabetic foot</option>
 </select>
 
 <select id="place">
-  <option>Hand</option>
-  <option>Foot</option>
-  <option>Back</option>
+<option>Hand</option>
+<option>Foot</option>
+<option>Back</option>
 </select>
 
 <input id="sessionDate" type="date">
@@ -79,7 +89,12 @@ button {
 <input id="materials" placeholder="Materials">
 <input id="mprice" placeholder="Materials Price">
 
-<button onclick="addPatient()">Add</button>
+<!-- زر الصورة -->
+<input type="file" id="image">
+
+<button onclick="addPatient()" style="background:#22c55e;color:white;border:none;border-radius:5px;">
+Add
+</button>
 
 <hr>
 
@@ -97,21 +112,36 @@ function save(){
 }
 
 function addPatient(){
-  let p = {
-    name: document.getElementById("name").value,
-    age: document.getElementById("age").value,
-    doctor: document.getElementById("doctor").value,
-    type: document.getElementById("type").value,
-    place: document.getElementById("place").value,
-    date: document.getElementById("sessionDate").value,
-    price: document.getElementById("price").value,
-    materials: document.getElementById("materials").value,
-    mprice: document.getElementById("mprice").value
+
+  let file = document.getElementById("image").files[0];
+
+  let reader = new FileReader();
+
+  reader.onload = function(e){
+
+    let p = {
+      name: document.getElementById("name").value,
+      age: document.getElementById("age").value,
+      doctor: document.getElementById("doctor").value,
+      type: document.getElementById("type").value,
+      place: document.getElementById("place").value,
+      date: document.getElementById("sessionDate").value,
+      price: document.getElementById("price").value,
+      materials: document.getElementById("materials").value,
+      mprice: document.getElementById("mprice").value,
+      image: e.target.result
+    };
+
+    patients.push(p);
+    save();
+    display();
   };
 
-  patients.push(p);
-  save();
-  display();
+  if(file){
+    reader.readAsDataURL(file);
+  } else {
+    alert("اختار صورة");
+  }
 }
 
 function deletePatient(i){
@@ -121,6 +151,7 @@ function deletePatient(i){
 }
 
 function display(){
+
   let s = document.getElementById("search").value.toLowerCase();
   let list = document.getElementById("list");
   list.innerHTML = "";
@@ -131,6 +162,7 @@ function display(){
 
     list.innerHTML += `
     <div class="card">
+      <img src="${p.image}" width="120">
       <h3>${p.name}</h3>
       <p>Age: ${p.age}</p>
       <p>Doctor: ${p.doctor}</p>
