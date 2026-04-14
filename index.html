@@ -8,94 +8,126 @@
 <style>
 body {
     font-family: Arial;
-    background: #0f172a;
-    color: white;
-    text-align: center;
+    margin:0;
+    padding:0;
+    background:#0f172a;
+    color:white;
+}
+
+.light {
+    background:#f1f5f9;
+    color:black;
 }
 
 .container {
-    margin-top: 100px;
+    padding:20px;
 }
 
-input {
-    padding: 10px;
-    margin: 5px;
-    width: 200px;
+input, select {
+    padding:8px;
+    margin:5px;
 }
 
 button {
-    padding: 10px 20px;
-    background: #22c55e;
-    border: none;
-    color: white;
-    cursor: pointer;
+    padding:8px 15px;
+    cursor:pointer;
 }
 
 .card {
-    background: #1e293b;
-    padding: 20px;
-    margin: 10px;
-    border-radius: 10px;
+    background:#1e293b;
+    padding:10px;
+    margin:10px 0;
+    border-radius:8px;
 }
-</style>
 
+.light .card {
+    background:white;
+}
+
+</style>
 </head>
+
 <body>
 
-<div class="container" id="login">
-    <h2>Delta Care Login</h2>
-    <input type="text" id="user" placeholder="Username"><br>
-    <input type="password" id="pass" placeholder="Password"><br>
-    <button onclick="login()">Login</button>
-</div>
+<div class="container">
 
-<div class="container" id="app" style="display:none;">
-    <h2>Patients</h2>
-    <input type="text" id="name" placeholder="Patient Name">
-    <input type="number" id="price" placeholder="Session Price">
-    <button onclick="addPatient()">Add</button>
+<h2>Delta Care System</h2>
 
-    <div id="list"></div>
+<button onclick="toggleMode()">🌙/☀️</button>
+
+<h3>Add Patient</h3>
+
+<input id="name" placeholder="Name">
+<input id="age" placeholder="Age">
+<input id="doctor" placeholder="Referring Doctor">
+<select id="type">
+<option>Complex wounds</option>
+<option>Rabea</option>
+</select>
+<input id="price" placeholder="Session Price">
+<input id="materials" placeholder="Materials">
+<input id="mprice" placeholder="Materials Price">
+
+<br>
+<button onclick="addPatient()">Add</button>
+
+<hr>
+
+<h3>Search</h3>
+<input id="search" onkeyup="display()" placeholder="Search...">
+
+<div id="list"></div>
+
 </div>
 
 <script>
-let patients = [];
 
-function login(){
-    let u = document.getElementById('user').value;
-    let p = document.getElementById('pass').value;
+let patients = JSON.parse(localStorage.getItem("patients")) || [];
 
-    if(u === "admin" && p === "1234"){
-        document.getElementById('login').style.display = "none";
-        document.getElementById('app').style.display = "block";
-    } else {
-        alert("Wrong login");
-    }
+function save(){
+localStorage.setItem("patients", JSON.stringify(patients));
 }
 
 function addPatient(){
-    let name = document.getElementById('name').value;
-    let price = document.getElementById('price').value;
+let p = {
+name: name.value,
+age: age.value,
+doctor: doctor.value,
+type: type.value,
+price: price.value,
+materials: materials.value,
+mprice: mprice.value
+};
 
-    let patient = {name, price};
-    patients.push(patient);
-
-    display();
+patients.push(p);
+save();
+display();
 }
 
 function display(){
-    let list = document.getElementById('list');
-    list.innerHTML = "";
+let s = search.value.toLowerCase();
+list.innerHTML="";
 
-    patients.forEach(p => {
-        list.innerHTML += `
-        <div class="card">
-            <h3>${p.name}</h3>
-            <p>Price: ${p.price} IQD</p>
-        </div>
-        `;
-    });
+patients.filter(p=>p.name.toLowerCase().includes(s)).forEach(p=>{
+list.innerHTML+=`
+<div class="card">
+<h3>${p.name}</h3>
+<p>Age: ${p.age}</p>
+<p>Doctor: ${p.doctor}</p>
+<p>Type: ${p.type}</p>
+<p>Session: ${p.price} IQD</p>
+<p>Materials: ${p.materials}</p>
+<p>Materials Cost: ${p.mprice} IQD</p>
+</div>`;
+});
 }
+
+function toggleMode(){
+document.body.classList.toggle("light");
+}
+
+display();
+
 </script>
 
 </body>
