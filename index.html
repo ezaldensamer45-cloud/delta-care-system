@@ -2,7 +2,6 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Delta Care System</title>
 
 <style>
@@ -10,7 +9,7 @@ body { font-family: Arial; background:#0f172a; color:white; padding:20px; }
 .light { background:#f1f5f9; color:black; }
 
 input, select { padding:8px; margin:5px; }
-button { padding:8px 15px; cursor:pointer; }
+button { padding:8px 10px; margin:3px; cursor:pointer; }
 
 .card {
   background:#1e293b;
@@ -20,31 +19,49 @@ button { padding:8px 15px; cursor:pointer; }
 }
 
 .light .card { background:white; }
+img { border-radius:8px; margin-top:5px; }
 </style>
 </head>
 
 <body>
 
 <h2>Delta Care System</h2>
-
 <button onclick="toggleMode()">🌙 / ☀️</button>
 
-<h3>Add Patient</h3>
+<h3>Add / Edit Patient</h3>
 
 <input id="name" placeholder="Name">
 <input id="age" placeholder="Age">
-<input id="doctor" placeholder="Referring Doctor">
+<input id="doctor" placeholder="Doctor">
 
 <select id="type">
   <option>Complex wounds</option>
   <option>Simple wounds</option>
 </select>
 
+<select id="location">
+  <option>يد</option>
+  <option>قدم</option>
+  <option>ظهر</option>
+  <option>بطن</option>
+</select>
+
+<input type="date" id="date">
+
+<select id="status">
+  <option>مستمر</option>
+  <option>مكتمل</option>
+  <option>متوقف</option>
+</select>
+
 <input id="price" placeholder="Session Price">
 <input id="materials" placeholder="Materials">
 <input id="mprice" placeholder="Materials Price">
 
-<button onclick="addPatient()">Add</button>
+<input id="notes" placeholder="Notes">
+<input type="file" id="image">
+
+<button onclick="addOrUpdate()">Save</button>
 
 <hr>
 
@@ -55,81 +72,131 @@ button { padding:8px 15px; cursor:pointer; }
 
 <script>
 let patients = [];
+let editId = null;
 
-// جلب البيانات من السيرفر
+// تحميل
 async function loadPatients(){
   let res = await fetch("https://delta-care-api.onrender.com/patients");
   patients = await res.json();
   display();
 }
 
-// إضافة مريض
-async function addPatient(){
+// إضافة أو تعديل
+async function addOrUpdate(){
+
+  let file = document.getElementById("image").files[0];
+  let imageBase64 = "";
+
+  if(file){
+    let reader = new FileReader();
+    await new Promise(resolve=>{
+      reader.onload = ()=>{ imageBase64 = reader.result; resolve(); };
+      reader.readAsDataURL(file);
+    });
+  }
+
   let p = {
-    name: document.getElementById("name").value,
-    age: document.getElementById("age").value,
-    doctor: document.getElementById("doctor").value,
-    type: document.getElementById("type").value,
-    price: document.getElementById("price").value,
-    materials: document.getElementById("materials").value,
-    mprice: document.getElementById("mprice").value
+    name: name.value,
+    age: age.value,
+    doctor: doctor.value,
+    type: type.value,
+    location: location.value,
+    date: date.value,
+    status: status.value,
+    price: price.value,
+    materials: materials.value,
+    mprice: mprice.value,
+    notes: notes.value,
+    image: imageBase64
   };
 
-  await fetch("https://delta-care-api.onrender.com/patients", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify(p)
-  });
+  if(editId){
+    await fetch("https://delta-care-api.onrender.com/patients/"+editId,{
+      method:"PUT",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(p)
+    });
+    editId = null;
+  } else {
+    await fetch("https://delta-care-api.onrender.com/patients",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(p)
+    });
+  }
 
+  clearFields();
   loadPatients();
-
-  // تفريغ الحقول
-  document.getElementById("name").value="";
-  document.getElementById("age").value="";
-  document.getElementById("doctor").value="";
-  document.getElementById("price").value="";
-  document.getElementById("materials").value="";
-  document.getElementById("mprice").value="";
 }
 
-// حذف مريض
+// حذف
 async function deletePatient(id){
-  await fetch("https://delta-care-api.onrender.com/patients/" + id, {
-    method: "DELETE"
-  });
+  await fetch("https://delta-care-api.onrender.com/patients/"+id,{method:"DELETE"});
   loadPatients();
 }
 
-// عرض المرضى
+// تعبئة للتعديل
+function editPatient(p){
+  name.value = p.name;
+  age.value = p.age;
+  doctor.value = p.doctor;
+  type.value = p.type;
+  location.value = p.location;
+  date.value = p.date;
+  status.value = p.status;
+  price.value = p.price;
+  materials.value = p.materials;
+  mprice.value = p.mprice;
+  notes.value = p.notes;
+
+  editId = p._id;
+}
+
+// عرض
 function display(){
-  let s = document.getElementById("search").value.toLowerCase();
-  let list = document.getElementById("list");
-  list.innerHTML = "";
+  let s = search.value.toLowerCase();
+  list.innerHTML="";
 
   patients
-    .filter(p => p.name.toLowerCase().includes(s))
-    .forEach(p => {
-      list.innerHTML += `
-        <div class="card">
-          <h3>${p.name}</h3>
-          <p>Age: ${p.age}</p>
-          <p>Doctor: ${p.doctor}</p>
-          <p>Type: ${p.type}</p>
-          <p>Session: ${p.price} IQD</p>
-          <p>Materials: ${p.materials}</p>
-          <p>Materials Cost: ${p.mprice} IQD</p>
-          <button onclick="deletePatient('${p._id}')">Delete</button>
-        </div>
-      `;
-    });
+  .filter(p=>p.name.toLowerCase().includes(s))
+  .forEach(p=>{
+    list.innerHTML+=`
+      <div class="card">
+        <h3>${p.name}</h3>
+
+        ${p.image ? `<img src="${p.image}" width="120">` : ""}
+
+        <p>Age: ${p.age}</p>
+        <p>Doctor: ${p.doctor}</p>
+        <p>Type: ${p.type}</p>
+        <p>Location: ${p.location}</p>
+        <p>Date: ${p.date}</p>
+        <p>Status: ${p.status}</p>
+
+        <p>Session: ${p.price} IQD</p>
+        <p>Materials: ${p.materials}</p>
+        <p>Materials Cost: ${p.mprice} IQD</p>
+
+        <p>Notes: ${p.notes}</p>
+
+        <button onclick='editPatient(${JSON.stringify(p)})'>Edit</button>
+        <button onclick="deletePatient('${p._id}')">Delete</button>
+      </div>
+    `;
+  });
 }
 
-// دارك / لايت مود
+// تنظيف
+function clearFields(){
+  document.querySelectorAll("input").forEach(i=>i.value="");
+}
+
+// دارك مود
 function toggleMode(){
   document.body.classList.toggle("light");
 }
 
-// تشغيل أول مرة
+// تشغيل
 loadPatients();
 </script>
 
