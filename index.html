@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delta Care System</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: #0f172a;
+    color: white;
+    text-align: center;
+}
+
+.container {
+    margin-top: 100px;
+}
+
+input {
+    padding: 10px;
+    margin: 5px;
+    width: 200px;
+}
+
+button {
+    padding: 10px 20px;
+    background: #22c55e;
+    border: none;
+    color: white;
+    cursor: pointer;
+}
+
+.card {
+    background: #1e293b;
+    padding: 20px;
+    margin: 10px;
+    border-radius: 10px;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container" id="login">
+    <h2>Delta Care Login</h2>
+    <input type="text" id="user" placeholder="Username"><br>
+    <input type="password" id="pass" placeholder="Password"><br>
+    <button onclick="login()">Login</button>
+</div>
+
+<div class="container" id="app" style="display:none;">
+    <h2>Patients</h2>
+    <input type="text" id="name" placeholder="Patient Name">
+    <input type="number" id="price" placeholder="Session Price">
+    <button onclick="addPatient()">Add</button>
+
+    <div id="list"></div>
+</div>
+
+<script>
+let patients = [];
+
+function login(){
+    let u = document.getElementById('user').value;
+    let p = document.getElementById('pass').value;
+
+    if(u === "admin" && p === "1234"){
+        document.getElementById('login').style.display = "none";
+        document.getElementById('app').style.display = "block";
+    } else {
+        alert("Wrong login");
+    }
+}
+
+function addPatient(){
+    let name = document.getElementById('name').value;
+    let price = document.getElementById('price').value;
+
+    let patient = {name, price};
+    patients.push(patient);
+
+    display();
+}
+
+function display(){
+    let list = document.getElementById('list');
+    list.innerHTML = "";
+
+    patients.forEach(p => {
+        list.innerHTML += `
+        <div class="card">
+            <h3>${p.name}</h3>
+            <p>Price: ${p.price} IQD</p>
+        </div>
+        `;
+    });
+}
+</script>
+
+</body>
+</html>
