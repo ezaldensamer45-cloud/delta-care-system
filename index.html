@@ -2,33 +2,61 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Delta Care System</title>
 
 <style>
-body { font-family: Arial; background:#0f172a; color:white; padding:20px; }
-.light { background:#f1f5f9; color:black; }
-
-input, select { padding:8px; margin:5px; }
-button { padding:8px 10px; margin:3px; cursor:pointer; }
-
-.card {
-  background:#1e293b;
-  padding:10px;
-  margin:10px 0;
-  border-radius:8px;
+body {
+  font-family: Arial;
+  background: url('https://raw.githubusercontent.com/ezaldensamer45-cloud/delta-care-system/main/WhatsApp%20Image%202026-04-12%20at%205.54.37%20PM.jpeg') no-repeat center center fixed;
+  background-size: cover;
+  color: white;
+  padding: 20px;
 }
 
-.light .card { background:white; }
-img { border-radius:8px; margin-top:5px; }
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.85);
+  z-index: -1;
+}
+
+.light {
+  background: #f1f5f9;
+  color: black;
+}
+
+input, select {
+  padding: 8px;
+  margin: 5px;
+}
+
+button {
+  padding: 8px 15px;
+  cursor: pointer;
+}
+
+.card {
+  background: #1e293b;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 8px;
+}
 </style>
+
 </head>
 
 <body>
 
 <h2>Delta Care System</h2>
+
 <button onclick="toggleMode()">🌙 / ☀️</button>
 
-<h3>Add / Edit Patient</h3>
+<h3>Add Patient</h3>
 
 <input id="name" placeholder="Name">
 <input id="age" placeholder="Age">
@@ -36,32 +64,22 @@ img { border-radius:8px; margin-top:5px; }
 
 <select id="type">
   <option>Complex wounds</option>
-  <option>Simple wounds</option>
+  <option>Burns</option>
+  <option>Diabetic foot</option>
 </select>
 
-<select id="location">
-  <option>يد</option>
-  <option>قدم</option>
-  <option>ظهر</option>
-  <option>بطن</option>
+<select id="place">
+  <option>Hand</option>
+  <option>Foot</option>
+  <option>Back</option>
 </select>
 
-<input type="date" id="date">
-
-<select id="status">
-  <option>مستمر</option>
-  <option>مكتمل</option>
-  <option>متوقف</option>
-</select>
-
+<input id="sessionDate" type="date">
 <input id="price" placeholder="Session Price">
 <input id="materials" placeholder="Materials">
 <input id="mprice" placeholder="Materials Price">
 
-<input id="notes" placeholder="Notes">
-<input type="file" id="image">
-
-<button onclick="addOrUpdate()">Save</button>
+<button onclick="addPatient()">Add</button>
 
 <hr>
 
@@ -71,133 +89,69 @@ img { border-radius:8px; margin-top:5px; }
 <div id="list"></div>
 
 <script>
-let patients = [];
-let editId = null;
 
-// تحميل
-async function loadPatients(){
-  let res = await fetch("https://delta-care-api.onrender.com/patients");
-  patients = await res.json();
+let patients = JSON.parse(localStorage.getItem("patients")) || [];
+
+function save(){
+  localStorage.setItem("patients", JSON.stringify(patients));
+}
+
+function addPatient(){
+  let p = {
+    name: document.getElementById("name").value,
+    age: document.getElementById("age").value,
+    doctor: document.getElementById("doctor").value,
+    type: document.getElementById("type").value,
+    place: document.getElementById("place").value,
+    date: document.getElementById("sessionDate").value,
+    price: document.getElementById("price").value,
+    materials: document.getElementById("materials").value,
+    mprice: document.getElementById("mprice").value
+  };
+
+  patients.push(p);
+  save();
   display();
 }
 
-// إضافة أو تعديل
-async function addOrUpdate(){
-
-  let file = document.getElementById("image").files[0];
-  let imageBase64 = "";
-
-  if(file){
-    let reader = new FileReader();
-    await new Promise(resolve=>{
-      reader.onload = ()=>{ imageBase64 = reader.result; resolve(); };
-      reader.readAsDataURL(file);
-    });
-  }
-
-  let p = {
-    name: name.value,
-    age: age.value,
-    doctor: doctor.value,
-    type: type.value,
-    location: location.value,
-    date: date.value,
-    status: status.value,
-    price: price.value,
-    materials: materials.value,
-    mprice: mprice.value,
-    notes: notes.value,
-    image: imageBase64
-  };
-
-  if(editId){
-    await fetch("https://delta-care-api.onrender.com/patients/"+editId,{
-      method:"PUT",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify(p)
-    });
-    editId = null;
-  } else {
-    await fetch("https://delta-care-api.onrender.com/patients",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify(p)
-    });
-  }
-
-  clearFields();
-  loadPatients();
+function deletePatient(i){
+  patients.splice(i,1);
+  save();
+  display();
 }
 
-// حذف
-async function deletePatient(id){
-  await fetch("https://delta-care-api.onrender.com/patients/"+id,{method:"DELETE"});
-  loadPatients();
-}
-
-// تعبئة للتعديل
-function editPatient(p){
-  name.value = p.name;
-  age.value = p.age;
-  doctor.value = p.doctor;
-  type.value = p.type;
-  location.value = p.location;
-  date.value = p.date;
-  status.value = p.status;
-  price.value = p.price;
-  materials.value = p.materials;
-  mprice.value = p.mprice;
-  notes.value = p.notes;
-
-  editId = p._id;
-}
-
-// عرض
 function display(){
-  let s = search.value.toLowerCase();
-  list.innerHTML="";
+  let s = document.getElementById("search").value.toLowerCase();
+  let list = document.getElementById("list");
+  list.innerHTML = "";
 
   patients
-  .filter(p=>p.name.toLowerCase().includes(s))
-  .forEach(p=>{
-    list.innerHTML+=`
-      <div class="card">
-        <h3>${p.name}</h3>
+  .filter(p => p.name.toLowerCase().includes(s))
+  .forEach((p,i)=>{
 
-        ${p.image ? `<img src="${p.image}" width="120">` : ""}
-
-        <p>Age: ${p.age}</p>
-        <p>Doctor: ${p.doctor}</p>
-        <p>Type: ${p.type}</p>
-        <p>Location: ${p.location}</p>
-        <p>Date: ${p.date}</p>
-        <p>Status: ${p.status}</p>
-
-        <p>Session: ${p.price} IQD</p>
-        <p>Materials: ${p.materials}</p>
-        <p>Materials Cost: ${p.mprice} IQD</p>
-
-        <p>Notes: ${p.notes}</p>
-
-        <button onclick='editPatient(${JSON.stringify(p)})'>Edit</button>
-        <button onclick="deletePatient('${p._id}')">Delete</button>
-      </div>
+    list.innerHTML += `
+    <div class="card">
+      <h3>${p.name}</h3>
+      <p>Age: ${p.age}</p>
+      <p>Doctor: ${p.doctor}</p>
+      <p>Type: ${p.type}</p>
+      <p>Place: ${p.place}</p>
+      <p>Date: ${p.date}</p>
+      <p>Session: ${p.price} IQD</p>
+      <p>Materials: ${p.materials}</p>
+      <p>Materials Cost: ${p.mprice} IQD</p>
+      <button onclick="deletePatient(${i})">Delete</button>
+    </div>
     `;
   });
 }
 
-// تنظيف
-function clearFields(){
-  document.querySelectorAll("input").forEach(i=>i.value="");
-}
-
-// دارك مود
 function toggleMode(){
   document.body.classList.toggle("light");
 }
 
-// تشغيل
-loadPatients();
+display();
+
 </script>
 
 </body>
