@@ -85,6 +85,8 @@ let patients = JSON.parse(localStorage.getItem("patients")) || [];
 
 function addPatient(){
 
+let files = images.files;
+
 let p = {
 name:name.value,
 age:age.value,
@@ -99,35 +101,55 @@ price:+price.value||0,
 materials:materials.value,
 mprice:+mprice.value||0,
 
-lastDate:date.value,
+lastDate: date.value ? new Date(date.value).toISOString().split("T")[0] : "",
 
 images:[],
 sessions:[]
 };
 
-let files = images.files;
+if(files.length === 0){
+savePatient(p);
+return;
+}
 
-if(files.length>0){
-for(let i=0;i<files.length && i<10;i++){
-let r=new FileReader();
-r.onload=e=>{
+let count = Math.min(files.length,10);
+let loaded = 0;
+
+for(let i=0;i<count;i++){
+let r = new FileReader();
+
+r.onload = function(e){
 p.images.push(e.target.result);
-if(p.images.length===Math.min(files.length,10)){
+loaded++;
+
+if(loaded === count){
 savePatient(p);
 }
 }
+
 r.readAsDataURL(files[i]);
 }
-}else{
-savePatient(p);
-}
-
 }
 
 function savePatient(p){
 patients.push(p);
 localStorage.setItem("patients", JSON.stringify(patients));
 display();
+clearFields();
+}
+
+function clearFields(){
+name.value="";
+age.value="";
+doctor.value="";
+diseaseType.value="";
+diseasePlace.value="";
+notes.value="";
+price.value="";
+materials.value="";
+mprice.value="";
+date.value="";
+images.value="";
 }
 
 function display(){
@@ -160,16 +182,14 @@ list.innerHTML+=`
 <p>Materials Cost: ${p.mprice}</p>
 
 <div>
-${p.images.map(img=>`<img src="${img}" width="80">`).join("")}
+${(p.images||[]).map(img=>`<img src="${img}" width="80" onclick="openImg('${img}')">`).join("")}
 </div>
 
 <hr>
 
 <h4>Sessions</h4>
-${p.sessions.map(s=>`
-<div>
-📅 ${s.date} - 💰 ${s.price}
-</div>
+${(p.sessions||[]).map(s=>`
+<div>📅 ${s.date} - 💰 ${s.price}</div>
 `).join("")}
 
 <input type="date" id="sd${i}">
@@ -184,7 +204,7 @@ ${p.sessions.map(s=>`
 
 <br>
 
-<button onclick="del(${i})">Delete</button>
+<button onclick="deletePatient(${i})">Delete</button>
 
 </div>
 </div>
@@ -194,16 +214,17 @@ ${p.sessions.map(s=>`
 
 function toggle(i){
 let d=document.getElementById("d"+i);
-d.style.display=d.style.display==="none"?"block":"block";
+d.style.display=d.style.display==="none"?"block":"none";
 }
 
-function del(i){
+function deletePatient(i){
 patients.splice(i,1);
 localStorage.setItem("patients", JSON.stringify(patients));
 display();
 }
 
 function addSession(i){
+
 let d=document.getElementById("sd"+i).value;
 let p=document.getElementById("sp"+i).value;
 
@@ -228,6 +249,11 @@ display();
 r.readAsDataURL(files[j]);
 }
 
+}
+
+function openImg(src){
+let w=window.open();
+w.document.write(`<img src="${src}" style="width:100%">`);
 }
 
 </script>
