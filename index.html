@@ -12,7 +12,7 @@ body{
   padding:20px;
 }
 
-input, select{
+input{
   padding:8px;
   margin:5px;
 }
@@ -41,25 +41,17 @@ button{
 <input id="age" placeholder="Age">
 <input id="doctor" placeholder="Doctor">
 
-<select id="type">
-  <option>نوع المرض</option>
-  <option>سكري</option>
-  <option>حروق</option>
-  <option>جروح عميقة</option>
-</select>
+<!-- ✨ صار input -->
+<input id="type" placeholder="نوع المرض">
 
-<select id="place">
-  <option>مكان المرض</option>
-  <option>يد</option>
-  <option>قدم</option>
-  <option>صدر</option>
-</select>
+<!-- ✨ صار input -->
+<input id="place" placeholder="مكان المرض">
 
 <input id="price" placeholder="Session Price">
 <input id="materials" placeholder="Materials">
 <input id="mprice" placeholder="Materials Price">
 
-<!-- ✨ الجديد -->
+<!-- ✨ جديد -->
 <input id="notes" placeholder="Notes">
 
 <br>
@@ -80,21 +72,28 @@ function save(){
 }
 
 function addPatient(){
+
+  if(!name.value) return alert("اكتب الاسم");
+
   let p = {
-    name: document.getElementById("name").value,
-    age: document.getElementById("age").value,
-    doctor: document.getElementById("doctor").value,
-    type: document.getElementById("type").value,
-    place: document.getElementById("place").value,
-    price: document.getElementById("price").value,
-    materials: document.getElementById("materials").value,
-    mprice: document.getElementById("mprice").value,
-    notes: document.getElementById("notes").value
+    name: name.value,
+    age: age.value,
+    doctor: doctor.value,
+    type: type.value,
+    place: place.value,
+    price: price.value,
+    materials: materials.value,
+    mprice: mprice.value,
+    notes: notes.value
   };
 
   patients.push(p);
+
   save();
   display();
+
+  // تنظيف الحقول
+  document.querySelectorAll("input").forEach(i=>i.value="");
 }
 
 function deletePatient(i){
