@@ -6,32 +6,37 @@
 
 <style>
 body{
-  font-family:Arial;
-  background:#0f172a;
-  color:white;
-  padding:20px;
+font-family:Arial;
+background:#0f172a url("WhatsApp%20Image%202026-04-12%20at%205.54.37%20PM.jpeg");
+background-size:cover;
+color:white;
+margin:0;
 }
-
-input, select{
-  padding:8px;
-  margin:5px;
+.overlay{
+background:rgba(0,0,0,0.7);
+min-height:100vh;
+padding:20px;
 }
-
-button{
-  padding:8px 15px;
-  cursor:pointer;
+input,button{
+padding:8px;
+margin:5px;
 }
-
 .card{
-  background:#1e293b;
-  padding:10px;
-  margin:10px 0;
-  border-radius:8px;
+background:#1e293b;
+padding:10px;
+margin:10px 0;
+border-radius:8px;
+cursor:pointer;
+}
+.details{
+display:none;
+margin-top:10px;
 }
 </style>
 </head>
 
 <body>
+<div class="overlay">
 
 <h2>Delta Care System</h2>
 
@@ -40,24 +45,13 @@ button{
 <input id="name" placeholder="Name">
 <input id="age" placeholder="Age">
 <input id="doctor" placeholder="Doctor">
-
-<select id="type">
-  <option>Complex wounds</option>
-  <option>Burn</option>
-  <option>Diabetic foot</option>
-</select>
-
-<select id="place">
-  <option>Hand</option>
-  <option>Foot</option>
-  <option>Chest</option>
-</select>
-
+<input id="disease" placeholder="نوع المرض">
+<input id="place" placeholder="مكان المرض">
 <input id="price" placeholder="Session Price">
 <input id="materials" placeholder="Materials">
 <input id="mprice" placeholder="Materials Price">
+<input id="notes" placeholder="Notes">
 
-<br>
 <button onclick="addPatient()">Add</button>
 
 <hr>
@@ -66,62 +60,65 @@ button{
 
 <div id="list"></div>
 
+</div>
+
 <script>
 
 let patients = JSON.parse(localStorage.getItem("patients")) || [];
 
 function save(){
-  localStorage.setItem("patients", JSON.stringify(patients));
+localStorage.setItem("patients",JSON.stringify(patients));
 }
 
 function addPatient(){
-  let p = {
-    name: name.value,
-    age: age.value,
-    doctor: doctor.value,
-    type: type.value,
-    place: place.value,
-    price: price.value,
-    materials: materials.value,
-    mprice: mprice.value
-  };
-
-  patients.push(p);
-  save();
-  display();
-
-  document.querySelectorAll("input").forEach(i=>i.value="");
+let p = {
+name: name.value,
+age: age.value,
+doctor: doctor.value,
+disease: disease.value,
+place: place.value,
+price: price.value,
+materials: materials.value,
+mprice: mprice.value,
+notes: notes.value
+};
+patients.push(p);
+save();
+display();
 }
 
-function deletePatient(i){
-  patients.splice(i,1);
-  save();
-  display();
+function toggle(i){
+let d = document.getElementById("d"+i);
+d.style.display = d.style.display=="block"?"none":"block";
 }
 
 function display(){
-  let s = document.getElementById("search").value.toLowerCase();
-  let list = document.getElementById("list");
-  list.innerHTML = "";
+let s = search.value.toLowerCase();
+list.innerHTML="";
 
-  patients
-  .filter(p => p.name.toLowerCase().includes(s))
-  .forEach((p,i)=>{
+patients
+.filter(p=>p.name.toLowerCase().includes(s))
+.forEach((p,i)=>{
 
-    list.innerHTML += `
-    <div class="card">
-      <h3>${p.name}</h3>
-      <p>Age: ${p.age}</p>
-      <p>Doctor: ${p.doctor}</p>
-      <p>Type: ${p.type}</p>
-      <p>Place: ${p.place}</p>
-      <p>Session: ${p.price} IQD</p>
-      <p>Materials: ${p.materials}</p>
-      <p>Materials Cost: ${p.mprice} IQD</p>
-      <button onclick="deletePatient(${i})">Delete</button>
-    </div>
-    `;
-  });
+list.innerHTML+=`
+<div class="card" onclick="toggle(${i})">
+
+<b>${p.name}</b>
+
+<div class="details" id="d${i}">
+<p>Age: ${p.age}</p>
+<p>Doctor: ${p.doctor}</p>
+<p>نوع المرض: ${p.disease}</p>
+<p>مكان المرض: ${p.place}</p>
+<p>Session: ${p.price} IQD</p>
+<p>Materials: ${p.materials}</p>
+<p>Materials Cost: ${p.mprice} IQD</p>
+<p>Notes: ${p.notes}</p>
+</div>
+
+</div>
+`;
+});
 }
 
 display();
