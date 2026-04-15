@@ -2,74 +2,68 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>Delta Care PRO</title>
+<title>Delta Care System</title>
 
 <style>
 body{
-font-family:Arial;
-background:#0f172a url("WhatsApp%20Image%202026-04-12%20at%205.54.37%20PM.jpeg") center/cover no-repeat;
-color:white;
-margin:0;
+  font-family:Arial;
+  background:#0f172a;
+  color:white;
+  padding:20px;
 }
 
-.overlay{
-background:rgba(0,0,0,0.75);
-min-height:100vh;
-padding:20px;
-}
-
-input{
-padding:8px;
-margin:5px;
+input, select{
+  padding:8px;
+  margin:5px;
 }
 
 button{
-padding:8px 12px;
-margin:3px;
-cursor:pointer;
+  padding:8px 15px;
+  cursor:pointer;
 }
 
 .card{
-background:#1e293b;
-padding:10px;
-margin:10px;
-border-radius:8px;
-}
-
-img{
-margin:5px;
-border-radius:6px;
-cursor:pointer;
+  background:#1e293b;
+  padding:10px;
+  margin:10px 0;
+  border-radius:8px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="overlay">
+<h2>Delta Care System</h2>
 
-<h2>Delta Care PRO</h2>
-
-<h3>Add Patient ➕</h3>
+<h3>Add Patient</h3>
 
 <input id="name" placeholder="Name">
 <input id="age" placeholder="Age">
 <input id="doctor" placeholder="Doctor">
 
-<input id="diseaseType" placeholder="نوع المرض">
-<input id="diseasePlace" placeholder="مكان المرض">
+<select id="type">
+  <option>نوع المرض</option>
+  <option>سكري</option>
+  <option>حروق</option>
+  <option>جروح عميقة</option>
+</select>
 
-<input id="notes" placeholder="Notes">
+<select id="place">
+  <option>مكان المرض</option>
+  <option>يد</option>
+  <option>قدم</option>
+  <option>صدر</option>
+</select>
 
 <input id="price" placeholder="Session Price">
 <input id="materials" placeholder="Materials">
 <input id="mprice" placeholder="Materials Price">
 
-<input type="date" id="date">
+<!-- ✨ الجديد -->
+<input id="notes" placeholder="Notes">
 
-<input type="file" id="images" multiple>
-
-<button onclick="addPatient()">➕ Add</button>
+<br>
+<button onclick="addPatient()">Add</button>
 
 <hr>
 
@@ -77,184 +71,65 @@ cursor:pointer;
 
 <div id="list"></div>
 
-</div>
-
 <script>
 
 let patients = JSON.parse(localStorage.getItem("patients")) || [];
 
+function save(){
+  localStorage.setItem("patients", JSON.stringify(patients));
+}
+
 function addPatient(){
+  let p = {
+    name: document.getElementById("name").value,
+    age: document.getElementById("age").value,
+    doctor: document.getElementById("doctor").value,
+    type: document.getElementById("type").value,
+    place: document.getElementById("place").value,
+    price: document.getElementById("price").value,
+    materials: document.getElementById("materials").value,
+    mprice: document.getElementById("mprice").value,
+    notes: document.getElementById("notes").value
+  };
 
-let files = images.files;
-
-let p = {
-name:name.value,
-age:age.value,
-doctor:doctor.value,
-
-diseaseType:diseaseType.value,
-diseasePlace:diseasePlace.value,
-
-notes:notes.value,
-
-price:+price.value||0,
-materials:materials.value,
-mprice:+mprice.value||0,
-
-lastDate: date.value ? new Date(date.value).toISOString().split("T")[0] : "",
-
-images:[],
-sessions:[]
-};
-
-if(files.length === 0){
-savePatient(p);
-return;
-}
-
-let count = Math.min(files.length,10);
-let loaded = 0;
-
-for(let i=0;i<count;i++){
-let r = new FileReader();
-
-r.onload = function(e){
-p.images.push(e.target.result);
-loaded++;
-
-if(loaded === count){
-savePatient(p);
-}
-}
-
-r.readAsDataURL(files[i]);
-}
-}
-
-function savePatient(p){
-patients.push(p);
-localStorage.setItem("patients", JSON.stringify(patients));
-display();
-clearFields();
-}
-
-function clearFields(){
-name.value="";
-age.value="";
-doctor.value="";
-diseaseType.value="";
-diseasePlace.value="";
-notes.value="";
-price.value="";
-materials.value="";
-mprice.value="";
-date.value="";
-images.value="";
-}
-
-function display(){
-
-list.innerHTML="";
-
-patients
-.filter(p=>p.name.toLowerCase().includes(search.value.toLowerCase()))
-.forEach((p,i)=>{
-
-list.innerHTML+=`
-<div class="card">
-
-<h3 onclick="toggle(${i})">${p.name}</h3>
-
-<div id="d${i}" style="display:none;">
-
-<p>Age: ${p.age}</p>
-<p>Doctor: ${p.doctor}</p>
-
-<p>نوع المرض: ${p.diseaseType}</p>
-<p>مكان المرض: ${p.diseasePlace}</p>
-
-<p>Notes: ${p.notes}</p>
-
-<p>آخر جلسة: ${p.lastDate || "-"}</p>
-
-<p>Session: ${p.price}</p>
-<p>Materials: ${p.materials}</p>
-<p>Materials Cost: ${p.mprice}</p>
-
-<div>
-${(p.images||[]).map(img=>`<img src="${img}" width="80" onclick="openImg('${img}')">`).join("")}
-</div>
-
-<hr>
-
-<h4>Sessions</h4>
-${(p.sessions||[]).map(s=>`
-<div>📅 ${s.date} - 💰 ${s.price}</div>
-`).join("")}
-
-<input type="date" id="sd${i}">
-<input placeholder="price" id="sp${i}">
-
-<button onclick="addSession(${i})">➕ Add Session</button>
-
-<br>
-
-<input type="file" id="si${i}" multiple>
-<button onclick="addImages(${i})">➕ Add Images</button>
-
-<br>
-
-<button onclick="deletePatient(${i})">Delete</button>
-
-</div>
-</div>
-`;
-});
-}
-
-function toggle(i){
-let d=document.getElementById("d"+i);
-d.style.display=d.style.display==="none"?"block":"none";
+  patients.push(p);
+  save();
+  display();
 }
 
 function deletePatient(i){
-patients.splice(i,1);
-localStorage.setItem("patients", JSON.stringify(patients));
+  patients.splice(i,1);
+  save();
+  display();
+}
+
+function display(){
+  let s = document.getElementById("search").value.toLowerCase();
+  let list = document.getElementById("list");
+  list.innerHTML = "";
+
+  patients
+  .filter(p => p.name.toLowerCase().includes(s))
+  .forEach((p,i)=>{
+
+    list.innerHTML += `
+    <div class="card">
+      <h3>${p.name}</h3>
+      <p>Age: ${p.age}</p>
+      <p>Doctor: ${p.doctor}</p>
+      <p>نوع المرض: ${p.type}</p>
+      <p>مكان المرض: ${p.place}</p>
+      <p>Session: ${p.price} IQD</p>
+      <p>Materials: ${p.materials}</p>
+      <p>Materials Cost: ${p.mprice} IQD</p>
+      <p>Notes: ${p.notes || ""}</p>
+      <button onclick="deletePatient(${i})">Delete</button>
+    </div>
+    `;
+  });
+}
+
 display();
-}
-
-function addSession(i){
-
-let d=document.getElementById("sd"+i).value;
-let p=document.getElementById("sp"+i).value;
-
-patients[i].sessions.push({date:d,price:p});
-patients[i].lastDate=d;
-
-localStorage.setItem("patients", JSON.stringify(patients));
-display();
-}
-
-function addImages(i){
-
-let files=document.getElementById("si"+i).files;
-
-for(let j=0;j<files.length && j<10;j++){
-let r=new FileReader();
-r.onload=e=>{
-patients[i].images.push(e.target.result);
-localStorage.setItem("patients", JSON.stringify(patients));
-display();
-}
-r.readAsDataURL(files[j]);
-}
-
-}
-
-function openImg(src){
-let w=window.open();
-w.document.write(`<img src="${src}" style="width:100%">`);
-}
 
 </script>
 
