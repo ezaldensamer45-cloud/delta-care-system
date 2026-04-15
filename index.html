@@ -2,43 +2,15 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>Delta Care System</title>
+<title>Delta Care PRO</title>
 
 <style>
-body{
-font-family: Arial;
-background:#0f172a url("WhatsApp%20Image%202026-04-12%20at%205.54.37%20PM.jpeg") center/cover no-repeat;
-color:white;
-margin:0;
-}
-
-.overlay{
-background:rgba(0,0,0,0.75);
-min-height:100vh;
-padding:20px;
-}
-
-input, select{
-padding:8px;
-margin:5px;
-}
-
-button{
-padding:8px 15px;
-cursor:pointer;
-}
-
-.card{
-background:#1e293b;
-padding:10px;
-margin:10px 0;
-border-radius:8px;
-}
-
-img{
-margin:5px;
-border-radius:6px;
-}
+body{font-family:Arial;background:#0f172a;color:white;margin:0;}
+.overlay{padding:20px;}
+input,select{padding:8px;margin:5px;}
+button{padding:8px 12px;margin:3px;}
+.card{background:#1e293b;padding:10px;margin:10px;border-radius:8px;}
+img{margin:5px;border-radius:6px;cursor:pointer;}
 </style>
 </head>
 
@@ -47,262 +19,247 @@ border-radius:6px;
 <!-- LOGIN -->
 <div id="loginBox" style="text-align:center;">
 <h2>Login</h2>
-<input id="user" placeholder="Username"><br>
-<input id="pass" type="password" placeholder="Password"><br>
+<input id="user" placeholder="User"><br>
+<input id="pass" type="password" placeholder="Pass"><br>
 <button onclick="login()">Login</button>
 </div>
 
 <!-- APP -->
 <div id="app" class="overlay" style="display:none;">
 
-<h2>Delta Care System</h2>
+<h2>Delta Care PRO</h2>
 
-<button onclick="openSettings()">⚙️ Settings</button>
+<button onclick="logout()">Logout</button>
+<button onclick="openSettings()" id="settingsBtn">⚙️</button>
 
-<h3>Add Patient</h3>
+<h3>Add / Edit Patient</h3>
 
 <input id="name" placeholder="Name">
 <input id="age" placeholder="Age">
 <input id="doctor" placeholder="Doctor">
 
-<select id="type">
-<option>Complex wounds</option>
-<option>Burn</option>
-<option>Diabetic foot</option>
-</select>
+<input id="diseaseType" placeholder="نوع المرض">
+<input id="diseasePlace" placeholder="مكان المرض">
 
-<select id="place">
-<option>Hand</option>
-<option>Foot</option>
-<option>Back</option>
-</select>
+<input id="notes" placeholder="Notes">
 
-<input id="date" type="date">
 <input id="price" placeholder="Session Price">
-<input id="materials" placeholder="Materials">
-<input id="mprice" placeholder="Materials Price">
+<input id="materials" placeholder="Materials Price">
 
-<br>
+<input type="date" id="date">
 
-<input type="file" id="images" multiple accept="image/*">
+<input type="file" id="images" multiple>
 
-<br>
-
-<button onclick="addPatient()">Add</button>
+<button onclick="savePatient()">Save</button>
 
 <hr>
 
-<h3>Search</h3>
 <input id="search" placeholder="Search..." oninput="display()">
+
+<h3 id="profit"></h3>
 
 <div id="list"></div>
 
 </div>
 
 <!-- SETTINGS -->
-<div id="settingsBox" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:black; padding:20px; overflow:auto;">
+<div id="settings" style="display:none;background:black;position:fixed;top:0;width:100%;height:100%;padding:20px;">
+<h2>Users</h2>
 
-<h2>Settings</h2>
-
-<h3>Change Admin</h3>
-<input id="newUser" placeholder="New Username">
-<input id="newPass" placeholder="New Password">
-<button onclick="changeUser()">Save</button>
-
-<hr>
-
-<h3>Add User</h3>
-<input id="addUserName" placeholder="Username">
-<input id="addUserPass" placeholder="Password">
+<input id="uName" placeholder="User">
+<input id="uPass" placeholder="Pass">
 <button onclick="addUser()">Add</button>
 
-<hr>
-
-<h3>Users</h3>
 <div id="usersList"></div>
 
-<br>
 <button onclick="closeSettings()">Close</button>
-
 </div>
 
 <script>
 
-let patients = JSON.parse(localStorage.getItem("patients")) || [];
+let patients=JSON.parse(localStorage.getItem("patients"))||[];
+let users=JSON.parse(localStorage.getItem("users"))||[{user:"admin",pass:"1234",role:"admin"}];
 
-let users = JSON.parse(localStorage.getItem("users")) || [
-{user:"admin", pass:"1234"}
-];
+let editIndex=null;
+let currentUser=null;
 
 function login(){
-let u = user.value;
-let p = pass.value;
-
-let found = users.find(x=>x.user===u && x.pass===p);
-
-if(found){
+let f=users.find(x=>x.user===user.value&&x.pass===pass.value);
+if(f){
+currentUser=f;
 loginBox.style.display="none";
 app.style.display="block";
+
+if(f.role!=="admin") settingsBtn.style.display="none";
+
 display();
-}else{
-alert("Wrong login");
-}
+}else alert("Wrong");
 }
 
-function addPatient(){
+function logout(){ location.reload(); }
 
-let files = document.getElementById("images").files;
-let imgs = [];
+function savePatient(){
+
+let files=images.files;
+let imgs=[];
 
 if(files.length===0){
-savePatient([]);
+finish([]);
 return;
 }
 
-for(let i=0;i<files.length && i<10;i++){
-
-let reader = new FileReader();
-
-reader.onload = function(e){
+for(let i=0;i<files.length&&i<10;i++){
+let r=new FileReader();
+r.onload=e=>{
 imgs.push(e.target.result);
-
-if(imgs.length===Math.min(files.length,10)){
-savePatient(imgs);
+if(imgs.length===Math.min(files.length,10)) finish(imgs);
+};
+r.readAsDataURL(files[i]);
 }
 }
 
-reader.readAsDataURL(files[i]);
-}
-}
+function finish(imgs){
 
-function savePatient(imgs){
-
-let p = {
+let p={
 name:name.value,
 age:age.value,
 doctor:doctor.value,
-type:type.value,
-place:place.value,
+
+diseaseType:diseaseType.value,
+diseasePlace:diseasePlace.value,
+notes:notes.value,
+
+price:+price.value||0,
+materials:+materials.value||0,
 date:date.value,
-price:price.value,
-materials:materials.value,
-mprice:mprice.value,
 images:imgs
 };
 
+if(editIndex!==null){
+patients[editIndex]=p;
+editIndex=null;
+}else{
 patients.push(p);
-localStorage.setItem("patients", JSON.stringify(patients));
-
-clearFields();
-display();
 }
 
-function clearFields(){
+localStorage.setItem("patients",JSON.stringify(patients));
+display();
+clear();
+}
+
+function clear(){
 name.value="";
 age.value="";
 doctor.value="";
+diseaseType.value="";
+diseasePlace.value="";
+notes.value="";
 price.value="";
 materials.value="";
-mprice.value="";
 images.value="";
 }
 
-function deletePatient(i){
-patients.splice(i,1);
-localStorage.setItem("patients", JSON.stringify(patients));
-display();
+function edit(i){
+let p=patients[i];
+
+name.value=p.name;
+age.value=p.age;
+doctor.value=p.doctor;
+
+diseaseType.value=p.diseaseType;
+diseasePlace.value=p.diseasePlace;
+notes.value=p.notes;
+
+price.value=p.price;
+materials.value=p.materials;
+date.value=p.date;
+
+editIndex=i;
 }
 
-function toggle(i){
-let d=document.getElementById("details-"+i);
-d.style.display=d.style.display==="none"?"block":"none";
+function del(i){
+if(confirm("Delete?")){
+patients.splice(i,1);
+localStorage.setItem("patients",JSON.stringify(patients));
+display();
+}
 }
 
 function display(){
 
-let s=search.value.toLowerCase();
 list.innerHTML="";
+let total=0;
 
 patients
-.filter(p=>p.name.toLowerCase().includes(s))
+.filter(p=>p.name.toLowerCase().includes(search.value.toLowerCase()))
 .forEach((p,i)=>{
+
+total+=p.price+p.materials;
 
 list.innerHTML+=`
 <div class="card">
 
 <h3 onclick="toggle(${i})">${p.name}</h3>
 
-<div id="details-${i}" style="display:none;">
+<div id="d${i}" style="display:none;">
 
 <p>Age: ${p.age}</p>
 <p>Doctor: ${p.doctor}</p>
-<p>Type: ${p.type}</p>
-<p>Place: ${p.place}</p>
+
+<p>نوع المرض: ${p.diseaseType}</p>
+<p>مكان المرض: ${p.diseasePlace}</p>
+
+<p>Notes: ${p.notes}</p>
+
 <p>Date: ${p.date||"-"}</p>
-<p>Session: ${p.price} IQD</p>
+
+<p>Session: ${p.price}</p>
 <p>Materials: ${p.materials}</p>
-<p>Materials Cost: ${p.mprice}</p>
 
 <div>
-${(p.images||[]).map(img=>`<img src="${img}" width="100">`).join("")}
+${(p.images||[]).map(img=>`<img src="${img}" width="100" onclick="openImg('${img}')">`).join("")}
 </div>
 
-<button onclick="deletePatient(${i})">Delete</button>
+<button onclick="edit(${i})">Edit</button>
+<button onclick="del(${i})">Delete</button>
 
 </div>
 </div>
 `;
 });
+
+profit.innerText="Total: "+total+" IQD";
 }
 
-// SETTINGS
-function openSettings(){
-settingsBox.style.display="block";
-loadUsers();
+function toggle(i){
+let d=document.getElementById("d"+i);
+d.style.display=d.style.display==="none"?"block":"none";
 }
 
-function closeSettings(){
-settingsBox.style.display="none";
+function openImg(src){
+let w=window.open();
+w.document.write(`<img src="${src}" style="width:100%">`);
 }
 
-function changeUser(){
-let u=newUser.value;
-let p=newPass.value;
-
-if(u&&p){
-users[0]={user:u,pass:p};
-localStorage.setItem("users",JSON.stringify(users));
-alert("Updated");
-}
-}
+// USERS
+function openSettings(){ settings.style.display="block"; loadUsers(); }
+function closeSettings(){ settings.style.display="none"; }
 
 function addUser(){
-let u=addUserName.value;
-let p=addUserPass.value;
-
-if(u&&p){
-users.push({user:u,pass:p});
+users.push({user:uName.value,pass:uPass.value,role:"staff"});
 localStorage.setItem("users",JSON.stringify(users));
 loadUsers();
-}
 }
 
 function loadUsers(){
 usersList.innerHTML="";
 users.forEach((u,i)=>{
-usersList.innerHTML+=`
-<div>
-${u.user}
-<button onclick="deleteUser(${i})">Delete</button>
-</div>`;
+usersList.innerHTML+=`${u.user} <button onclick="delUser(${i})">X</button><br>`;
 });
 }
 
-function deleteUser(i){
-if(i===0){
-alert("Admin cannot be deleted");
-return;
-}
+function delUser(i){
+if(i===0)return;
 users.splice(i,1);
 localStorage.setItem("users",JSON.stringify(users));
 loadUsers();
