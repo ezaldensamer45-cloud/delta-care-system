@@ -12,7 +12,7 @@ body{
   padding:20px;
 }
 
-input{
+input, select{
   padding:8px;
   margin:5px;
 }
@@ -41,18 +41,21 @@ button{
 <input id="age" placeholder="Age">
 <input id="doctor" placeholder="Doctor">
 
-<!-- ✨ صار input -->
-<input id="type" placeholder="نوع المرض">
+<select id="type">
+  <option>Complex wounds</option>
+  <option>Burn</option>
+  <option>Diabetic foot</option>
+</select>
 
-<!-- ✨ صار input -->
-<input id="place" placeholder="مكان المرض">
+<select id="place">
+  <option>Hand</option>
+  <option>Foot</option>
+  <option>Chest</option>
+</select>
 
 <input id="price" placeholder="Session Price">
 <input id="materials" placeholder="Materials">
 <input id="mprice" placeholder="Materials Price">
-
-<!-- ✨ جديد -->
-<input id="notes" placeholder="Notes">
 
 <br>
 <button onclick="addPatient()">Add</button>
@@ -72,9 +75,6 @@ function save(){
 }
 
 function addPatient(){
-
-  if(!name.value) return alert("اكتب الاسم");
-
   let p = {
     name: name.value,
     age: age.value,
@@ -83,16 +83,13 @@ function addPatient(){
     place: place.value,
     price: price.value,
     materials: materials.value,
-    mprice: mprice.value,
-    notes: notes.value
+    mprice: mprice.value
   };
 
   patients.push(p);
-
   save();
   display();
 
-  // تنظيف الحقول
   document.querySelectorAll("input").forEach(i=>i.value="");
 }
 
@@ -116,12 +113,11 @@ function display(){
       <h3>${p.name}</h3>
       <p>Age: ${p.age}</p>
       <p>Doctor: ${p.doctor}</p>
-      <p>نوع المرض: ${p.type}</p>
-      <p>مكان المرض: ${p.place}</p>
+      <p>Type: ${p.type}</p>
+      <p>Place: ${p.place}</p>
       <p>Session: ${p.price} IQD</p>
       <p>Materials: ${p.materials}</p>
       <p>Materials Cost: ${p.mprice} IQD</p>
-      <p>Notes: ${p.notes || ""}</p>
       <button onclick="deletePatient(${i})">Delete</button>
     </div>
     `;
