@@ -96,7 +96,7 @@ let files = document.getElementById("images").files;
 let images = [];
 
 if(files.length === 0){
-savePatient(images);
+savePatient(images,name,age,doctor,disease,place,date,price,materials,notes);
 return;
 }
 
@@ -108,7 +108,7 @@ reader.onload = function(e){
 images.push(e.target.result);
 
 if(images.length === files.length){
-savePatient(images);
+savePatient(images,name,age,doctor,disease,place,date,price,materials,notes);
 }
 };
 
@@ -117,19 +117,19 @@ reader.readAsDataURL(files[i]);
 
 }
 
-function savePatient(images){
+function savePatient(images,name,age,doctor,disease,place,date,price,materials,notes){
 
 let patient = {
-name,
-age,
-doctor,
-disease,
-place,
-date,
-price,
-materials,
-notes,
-images
+name:name,
+age:age,
+doctor:doctor,
+disease:disease,
+place:place,
+date:date,
+price:price,
+materials:materials,
+notes:notes,
+images:images
 };
 
 patients.push(patient);
