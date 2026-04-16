@@ -6,8 +6,9 @@
 
 <style>
 body{
-font-family: Arial;
-background:#0f172a url("WhatsApp%20Image%202026-04-12%20at%205.54.37%20PM.jpeg") center/cover no-repeat;
+font-family:Arial;
+background:#0f172a url("WhatsApp%20Image%202026-04-12%20at%205.54.37%20PM.jpeg");
+background-size:cover;
 color:white;
 margin:0;
 }
@@ -18,14 +19,9 @@ min-height:100vh;
 padding:20px;
 }
 
-input, select{
+input,button{
 padding:8px;
 margin:5px;
-}
-
-button{
-padding:8px 15px;
-cursor:pointer;
 }
 
 .card{
@@ -33,31 +29,21 @@ background:#1e293b;
 padding:10px;
 margin:10px 0;
 border-radius:8px;
+cursor:pointer;
 }
 
-img{
-margin:5px;
-border-radius:6px;
+.details{
+display:none;
+margin-top:10px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="loginBox" style="text-align:center;">
-<h2>Login</h2>
-<input id="user" placeholder="Username"><br>
-<input id="pass" type="password" placeholder="Password"><br>
-<button onclick="login()">Login</button>
-</div>
-
-<!-- APP -->
-<div id="app" class="overlay" style="display:none;">
+<div class="overlay">
 
 <h2>Delta Care System</h2>
-
-<button onclick="openSettings()">⚙️ Settings</button>
 
 <h3>Add Patient</h3>
 
@@ -67,12 +53,11 @@ border-radius:6px;
 
 <input id="disease" placeholder="Disease Type">
 <input id="place" placeholder="Disease Location">
-<input id="notes" placeholder="Notes">
 
 <input id="date" type="date">
 <input id="price" placeholder="Session Price">
 <input id="materials" placeholder="Materials">
-
+<input id="notes" placeholder="Notes">
 
 <br>
 
@@ -85,36 +70,9 @@ border-radius:6px;
 <hr>
 
 <h3>Search</h3>
-<input id="search" placeholder="Search..." oninput="display()">
+<input id="search" oninput="display()" placeholder="Search...">
 
 <div id="list"></div>
-
-</div>
-
-<!-- SETTINGS -->
-<div id="settingsBox" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:black; padding:20px; overflow:auto;">
-
-<h2>Settings</h2>
-
-<h3>Change Admin</h3>
-<input id="newUser" placeholder="New Username">
-<input id="newPass" placeholder="New Password">
-<button onclick="changeUser()">Save</button>
-
-<hr>
-
-<h3>Add User</h3>
-<input id="addUserName" placeholder="Username">
-<input id="addUserPass" placeholder="Password">
-<button onclick="addUser()">Add</button>
-
-<hr>
-
-<h3>Users</h3>
-<div id="usersList"></div>
-
-<br>
-<button onclick="closeSettings()">Close</button>
 
 </div>
 
@@ -122,74 +80,59 @@ border-radius:6px;
 
 let patients = JSON.parse(localStorage.getItem("patients")) || [];
 
-let users = JSON.parse(localStorage.getItem("users")) || [
-{user:"admin", pass:"1234"}
-];
-
-function login(){
-let u = user.value;
-let p = pass.value;
-
-let found = users.find(x=>x.user===u && x.pass===p);
-
-if(found){
-loginBox.style.display="none";
-app.style.display="block";
-display();
-}else{
-alert("Wrong login");
-}
-}
-
 function addPatient(){
 
-let files = document.getElementById("images").files;
-let imgs = [];
+let name = document.getElementById("name").value;
+let age = document.getElementById("age").value;
+let doctor = document.getElementById("doctor").value;
+let disease = document.getElementById("disease").value;
+let place = document.getElementById("place").value;
+let date = document.getElementById("date").value;
+let price = document.getElementById("price").value;
+let materials = document.getElementById("materials").value;
+let notes = document.getElementById("notes").value;
 
-if(files.length===0){
-savePatient([]);
+let files = document.getElementById("images").files;
+let images = [];
+
+if(files.length === 0){
+savePatient(images);
 return;
 }
 
-for(let i=0;i<files.length && i<10;i++){
+for(let i=0;i<files.length;i++){
 
 let reader = new FileReader();
 
 reader.onload = function(e){
-imgs.push(e.target.result);
+images.push(e.target.result);
 
-if(imgs.length===Math.min(files.length,10)){
-savePatient(imgs);
+if(images.length === files.length){
+savePatient(images);
 }
-}
+};
 
 reader.readAsDataURL(files[i]);
 }
+
 }
 
-function savePatient(imgs){
+function savePatient(images){
 
-let p = {
-name: document.getElementById("name").value,
-age: document.getElementById("age").value,
-doctor: document.getElementById("doctor").value,
-disease: document.getElementById("disease").value,
-place: document.getElementById("place").value,
-date: document.getElementById("date").value,
-price: document.getElementById("price").value,
-materials: document.getElementById("materials").value,
-notes: document.getElementById("notes").value,
-images: imgs
+let patient = {
+name,
+age,
+doctor,
+disease,
+place,
+date,
+price,
+materials,
+notes,
+images
 };
 
-patients.push(p);
-localStorage.setItem("patients", JSON.stringify(patients));
-
-clearFields();
-display();
-}
-
-patients.push(p);
+patients.push(patient);
 localStorage.setItem("patients", JSON.stringify(patients));
 
 clearFields();
@@ -197,13 +140,7 @@ display();
 }
 
 function clearFields(){
-name.value="";
-age.value="";
-doctor.value="";
-price.value="";
-materials.value="";
-mprice.value="";
-images.value="";
+document.querySelectorAll("input").forEach(i=>i.value="");
 }
 
 function deletePatient(i){
@@ -212,100 +149,52 @@ localStorage.setItem("patients", JSON.stringify(patients));
 display();
 }
 
-function toggle(i){
-let d=document.getElementById("details-"+i);
-d.style.display=d.style.display==="none"?"block":"none";
+function toggleDetails(el){
+let d = el.querySelector(".details");
+d.style.display = d.style.display === "block" ? "none" : "block";
 }
 
 function display(){
 
-let s=search.value.toLowerCase();
-list.innerHTML="";
+let s = document.getElementById("search").value.toLowerCase();
+let list = document.getElementById("list");
+list.innerHTML = "";
 
 patients
-.filter(p=>p.name.toLowerCase().includes(s))
+.filter(p => p.name.toLowerCase().includes(s))
 .forEach((p,i)=>{
 
-list.innerHTML+=`
-<div class="card">
+list.innerHTML += `
+<div class="card" onclick="toggleDetails(this)">
 
-<h3 onclick="toggle(${i})">${p.name}</h3>
+<h3>${p.name}</h3>
 
-<div id="details-${i}" style="display:none;">
+<div class="details">
 
 <p>Age: ${p.age}</p>
 <p>Doctor: ${p.doctor}</p>
 <p>Disease: ${p.disease}</p>
 <p>Location: ${p.place}</p>
-<p>Date: ${p.date||"-"}</p>
+<p>Date: ${p.date}</p>
 <p>Session: ${p.price} IQD</p>
 <p>Materials: ${p.materials}</p>
 <p>Notes: ${p.notes}</p>
 
-<div>
-${(p.images||[]).map(img=>`<img src="${img}" width="100">`).join("")}
+${p.images.map(img=>`<img src="${img}" width="100">`).join("")}
+
+<br><br>
+<button onclick="event.stopPropagation(); deletePatient(${i})">Delete</button>
+
 </div>
 
-<button onclick="deletePatient(${i})">Delete</button>
-
-</div>
 </div>
 `;
+
 });
+
 }
 
-// SETTINGS
-function openSettings(){
-settingsBox.style.display="block";
-loadUsers();
-}
-
-function closeSettings(){
-settingsBox.style.display="none";
-}
-
-function changeUser(){
-let u=newUser.value;
-let p=newPass.value;
-
-if(u&&p){
-users[0]={user:u,pass:p};
-localStorage.setItem("users",JSON.stringify(users));
-alert("Updated");
-}
-}
-
-function addUser(){
-let u=addUserName.value;
-let p=addUserPass.value;
-
-if(u&&p){
-users.push({user:u,pass:p});
-localStorage.setItem("users",JSON.stringify(users));
-loadUsers();
-}
-}
-
-function loadUsers(){
-usersList.innerHTML="";
-users.forEach((u,i)=>{
-usersList.innerHTML+=`
-<div>
-${u.user}
-<button onclick="deleteUser(${i})">Delete</button>
-</div>`;
-});
-}
-
-function deleteUser(i){
-if(i===0){
-alert("Admin cannot be deleted");
-return;
-}
-users.splice(i,1);
-localStorage.setItem("users",JSON.stringify(users));
-loadUsers();
-}
+display();
 
 </script>
 
