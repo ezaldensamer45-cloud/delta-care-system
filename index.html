@@ -7,36 +7,37 @@
 <style>
 body{
 font-family:Arial;
-background:#0f172a url("WhatsApp%20Image%202026-04-12%20at%205.54.37%20PM.jpeg");
-background-size:cover;
+background:#0f172a;
 color:white;
 margin:0;
 }
 
 .overlay{
-background:rgba(0,0,0,0.75);
+background:rgba(0,0,0,0.7);
 min-height:100vh;
 padding:20px;
 }
 
-input,button{
+input{
 padding:8px;
 margin:5px;
+width:180px;
+}
+
+button{
+padding:8px 15px;
+margin:5px;
+cursor:pointer;
 }
 
 .card{
 background:#1e293b;
 padding:10px;
 margin:10px 0;
-border-radius:8px;
-cursor:pointer;
-}
-
-.details{
-display:none;
-margin-top:10px;
+border-radius:10px;
 }
 </style>
+
 </head>
 
 <body>
@@ -55,22 +56,23 @@ margin-top:10px;
 <input id="place" placeholder="Disease Location">
 
 <input id="date" type="date">
+
 <input id="price" placeholder="Session Price">
 <input id="materials" placeholder="Materials">
 <input id="notes" placeholder="Notes">
 
 <br>
 
-<input type="file" id="images" multiple accept="image/*">
+<input type="file" id="images" multiple>
 
 <br>
 
-<button onclick="addPatient()">Add</button>
+<button id="addBtn">Add</button>
 
 <hr>
 
 <h3>Search</h3>
-<input id="search" oninput="display()" placeholder="Search...">
+<input id="search" placeholder="Search..." oninput="display()">
 
 <div id="list"></div>
 
@@ -80,9 +82,17 @@ margin-top:10px;
 
 let patients = JSON.parse(localStorage.getItem("patients")) || [];
 
+document.getElementById("addBtn").onclick = addPatient;
+
 function addPatient(){
 
 let name = document.getElementById("name").value;
+
+if(name === ""){
+alert("اكتب الاسم");
+return;
+}
+
 let age = document.getElementById("age").value;
 let doctor = document.getElementById("doctor").value;
 let disease = document.getElementById("disease").value;
@@ -105,6 +115,7 @@ for(let i=0;i<files.length;i++){
 let reader = new FileReader();
 
 reader.onload = function(e){
+
 images.push(e.target.result);
 
 if(images.length === files.length){
@@ -120,44 +131,31 @@ reader.readAsDataURL(files[i]);
 function savePatient(images,name,age,doctor,disease,place,date,price,materials,notes){
 
 let patient = {
-name:name,
-age:age,
-doctor:doctor,
-disease:disease,
-place:place,
-date:date,
-price:price,
-materials:materials,
-notes:notes,
-images:images
+name,
+age,
+doctor,
+disease,
+place,
+date,
+price,
+materials,
+notes,
+images
 };
 
 patients.push(patient);
 localStorage.setItem("patients", JSON.stringify(patients));
 
-clearFields();
 display();
-}
 
-function clearFields(){
-document.querySelectorAll("input").forEach(i=>i.value="");
-}
-
-function deletePatient(i){
-patients.splice(i,1);
-localStorage.setItem("patients", JSON.stringify(patients));
-display();
-}
-
-function toggleDetails(el){
-let d = el.querySelector(".details");
-d.style.display = d.style.display === "block" ? "none" : "block";
+alert("تم الحفظ ✅");
 }
 
 function display(){
 
 let s = document.getElementById("search").value.toLowerCase();
 let list = document.getElementById("list");
+
 list.innerHTML = "";
 
 patients
@@ -165,33 +163,33 @@ patients
 .forEach((p,i)=>{
 
 list.innerHTML += `
-<div class="card" onclick="toggleDetails(this)">
+<div class="card">
 
 <h3>${p.name}</h3>
-
-<div class="details">
 
 <p>Age: ${p.age}</p>
 <p>Doctor: ${p.doctor}</p>
 <p>Disease: ${p.disease}</p>
 <p>Location: ${p.place}</p>
 <p>Date: ${p.date}</p>
-<p>Session: ${p.price} IQD</p>
+<p>Session: ${p.price}</p>
 <p>Materials: ${p.materials}</p>
 <p>Notes: ${p.notes}</p>
 
 ${p.images.map(img=>`<img src="${img}" width="100">`).join("")}
 
-<br><br>
-<button onclick="event.stopPropagation(); deletePatient(${i})">Delete</button>
-
-</div>
+<br>
+<button onclick="deletePatient(${i})">Delete</button>
 
 </div>
 `;
-
 });
+}
 
+function deletePatient(i){
+patients.splice(i,1);
+localStorage.setItem("patients", JSON.stringify(patients));
+display();
 }
 
 display();
