@@ -37,7 +37,6 @@ margin:10px 0;
 border-radius:10px;
 }
 </style>
-
 </head>
 
 <body>
@@ -54,146 +53,92 @@ border-radius:10px;
 
 <input id="disease" placeholder="Disease Type">
 <input id="place" placeholder="Disease Location">
-
-<input id="date" type="date">
-
-<input id="price" placeholder="Session Price">
-<input id="materials" placeholder="Materials">
 <input id="notes" placeholder="Notes">
 
+<input id="date" type="date">
+<input id="price" placeholder="Session Price">
+
 <br>
 
-<input type="file" id="images" multiple>
-
-<br>
-
-<button id="addBtn">Add</button>
+<button onclick="addPatient()">Add</button>
 
 <hr>
 
-<h3>Search</h3>
-<input id="search" placeholder="Search..." oninput="display()">
-
+<h3>Patients</h3>
 <div id="list"></div>
 
 </div>
 
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
 <script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDUyPh2DVnkrDSFF_1YWptAplKJE8jdckc",
+  authDomain: "delta-care-3cadc.firebaseapp.com",
+  projectId: "delta-care-3cadc",
+  storageBucket: "delta-care-3cadc.firebasestorage.app",
+  messagingSenderId: "994601391598",
+  appId: "1:994601391598:web:98fbca752208b8c2842aff"
+};
 
-let patients = JSON.parse(localStorage.getItem("patients")) || [];
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-document.getElementById("addBtn").onclick = addPatient;
-
+// ADD
 function addPatient(){
-
-let name = document.getElementById("name").value;
-
-if(name === ""){
-alert("اكتب الاسم");
-return;
-}
-
-let age = document.getElementById("age").value;
-let doctor = document.getElementById("doctor").value;
-let disease = document.getElementById("disease").value;
-let place = document.getElementById("place").value;
-let date = document.getElementById("date").value;
-let price = document.getElementById("price").value;
-let materials = document.getElementById("materials").value;
-let notes = document.getElementById("notes").value;
-
-let files = document.getElementById("images").files;
-let images = [];
-
-if(files.length === 0){
-savePatient(images,name,age,doctor,disease,place,date,price,materials,notes);
-return;
-}
-
-for(let i=0;i<files.length;i++){
-
-let reader = new FileReader();
-
-reader.onload = function(e){
-
-images.push(e.target.result);
-
-if(images.length === files.length){
-savePatient(images,name,age,doctor,disease,place,date,price,materials,notes);
-}
+let p = {
+name: document.getElementById("name").value,
+age: document.getElementById("age").value,
+doctor: document.getElementById("doctor").value,
+disease: document.getElementById("disease").value,
+place: document.getElementById("place").value,
+notes: document.getElementById("notes").value,
+date: document.getElementById("date").value,
+price: document.getElementById("price").value
 };
 
-reader.readAsDataURL(files[i]);
-}
-
-}
-
-function savePatient(images,name,age,doctor,disease,place,date,price,materials,notes){
-
-let patient = {
-name,
-age,
-doctor,
-disease,
-place,
-date,
-price,
-materials,
-notes,
-images
-};
-
-patients.push(patient);
-localStorage.setItem("patients", JSON.stringify(patients));
-
+db.collection("patients").add(p).then(()=>{
+alert("Added ✅");
 display();
-
-alert("تم الحفظ ✅");
+});
 }
 
+// DISPLAY
 function display(){
+document.getElementById("list").innerHTML="";
 
-let s = document.getElementById("search").value.toLowerCase();
-let list = document.getElementById("list");
+db.collection("patients").get().then((data)=>{
+data.forEach(doc=>{
+let p = doc.data();
 
-list.innerHTML = "";
-
-patients
-.filter(p => p.name.toLowerCase().includes(s))
-.forEach((p,i)=>{
-
-list.innerHTML += `
+document.getElementById("list").innerHTML += `
 <div class="card">
-
-<h3>${p.name}</h3>
-
+<p>Name: ${p.name}</p>
 <p>Age: ${p.age}</p>
 <p>Doctor: ${p.doctor}</p>
 <p>Disease: ${p.disease}</p>
 <p>Location: ${p.place}</p>
-<p>Date: ${p.date}</p>
-<p>Session: ${p.price}</p>
-<p>Materials: ${p.materials}</p>
 <p>Notes: ${p.notes}</p>
+<p>Date: ${p.date}</p>
+<p>Price: ${p.price}</p>
 
-${p.images.map(img=>`<img src="${img}" width="100">`).join("")}
-
-<br>
-<button onclick="deletePatient(${i})">Delete</button>
-
+<button onclick="deletePatient('${doc.id}')">Delete</button>
 </div>
 `;
 });
+});
 }
 
-function deletePatient(i){
-patients.splice(i,1);
-localStorage.setItem("patients", JSON.stringify(patients));
+// DELETE
+function deletePatient(id){
+db.collection("patients").doc(id).delete().then(()=>{
 display();
+});
 }
 
 display();
-
 </script>
 
 </body>
