@@ -2,43 +2,15 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>Delta Care System</title>
+<title>Delta Care</title>
 
 <style>
-body{
-font-family:Arial;
-background:#0f172a;
-color:white;
-margin:0;
-}
-
-.overlay{
-padding:20px;
-}
-
-input{
-padding:8px;
-margin:5px;
-width:180px;
-}
-
-button{
-padding:8px 15px;
-margin:5px;
-cursor:pointer;
-}
-
-.card{
-background:#1e293b;
-padding:10px;
-margin:10px 0;
-border-radius:10px;
-}
-
-img{
-border-radius:10px;
-margin:5px;
-}
+body{font-family:Arial;background:#0f172a;color:white;margin:0}
+.overlay{padding:20px}
+input{padding:8px;margin:5px;width:180px}
+button{padding:8px 15px;margin:5px;cursor:pointer}
+.card{background:#1e293b;padding:10px;margin:10px 0;border-radius:10px}
+img{margin:5px;border-radius:8px}
 </style>
 </head>
 
@@ -55,7 +27,7 @@ margin:5px;
 </div>
 
 <!-- SYSTEM -->
-<div id="system" style="display:none;">
+<div id="system" style="display:none">
 
 <div style="display:flex;align-items:center;gap:10px;">
 <img src="https://raw.githubusercontent.com/ezaldensamer45-cloud/delta-care-system/main/logo.jpg" width="70">
@@ -67,40 +39,33 @@ margin:5px;
 <input id="name" placeholder="Name">
 <input id="age" placeholder="Age">
 <input id="doctor" placeholder="Doctor">
-
-<input id="disease" placeholder="Disease Type">
-<input id="place" placeholder="Disease Location">
+<input id="disease" placeholder="Disease">
+<input id="place" placeholder="Location">
 <input id="notes" placeholder="Notes">
-
 <input id="date" type="date">
-<input id="price" placeholder="Session Price">
+<input id="price" placeholder="Price">
 
 <br>
-
 <input type="file" id="images" multiple>
-
 <br>
 
 <button onclick="addPatient()">Add</button>
 
 <hr>
 
-<input id="search" oninput="display()" placeholder="Search...">
-
+<input id="search" oninput="display()" placeholder="Search">
 <div id="list"></div>
 
 </div>
-
 </div>
 
 <script>
 
-// بيانات
 let patients = JSON.parse(localStorage.getItem("patients")) || [];
 
 // LOGIN
 function login(){
-if(user.value === "admin" && pass.value === "1234"){
+if(user.value==="admin" && pass.value==="1234"){
 loginBox.style.display="none";
 system.style.display="block";
 display();
@@ -112,65 +77,65 @@ alert("Wrong login");
 // ADD
 function addPatient(){
 
-let nameVal = document.getElementById("name").value;
+let nameVal = name.value;
 
-if(nameVal === ""){
+if(nameVal===""){
 alert("اكتب الاسم");
 return;
 }
 
-let files = document.getElementById("images").files;
-let imagesArr = [];
+let files = images.files;
+let imgs = [];
 
-if(files.length > 0){
+if(files.length>0){
 
-let loaded = 0;
+let count=0;
 
 for(let i=0;i<files.length;i++){
-let reader = new FileReader();
+let reader=new FileReader();
 
-reader.onload = function(e){
-imagesArr.push(e.target.result);
-loaded++;
+reader.onload=function(e){
+imgs.push(e.target.result);
+count++;
 
-if(loaded === files.length){
-savePatient(imagesArr);
+if(count===files.length){
+save(imgs);
 }
-};
+}
 
 reader.readAsDataURL(files[i]);
 }
 
 }else{
-savePatient([]);
+save([]);
 }
 
 }
 
 // SAVE
-function savePatient(imagesArr){
+function save(imgs){
 
-let p = {
-name: name.value,
-age: age.value,
-doctor: doctor.value,
-disease: disease.value,
-place: place.value,
-notes: notes.value,
-date: date.value,
-price: price.value,
-images: imagesArr
+let p={
+name:name.value,
+age:age.value,
+doctor:doctor.value,
+disease:disease.value,
+place:place.value,
+notes:notes.value,
+date:date.value,
+price:price.value,
+images:imgs
 };
 
 patients.push(p);
-localStorage.setItem("patients", JSON.stringify(patients));
+localStorage.setItem("patients",JSON.stringify(patients));
 
 display();
-clearInputs();
+clear();
 }
 
 // CLEAR
-function clearInputs(){
+function clear(){
 name.value="";
 age.value="";
 doctor.value="";
@@ -185,28 +150,28 @@ images.value="";
 // DISPLAY
 function display(){
 
-let s = search.value.toLowerCase();
-list.innerHTML = "";
+let s=search.value.toLowerCase();
+list.innerHTML="";
 
 patients.forEach((p,i)=>{
 
 if(p.name.toLowerCase().includes(s)){
 
-list.innerHTML += `
+list.innerHTML+=`
 <div class="card">
 <b>${p.name}</b><br>
-Age: ${p.age}<br>
-Doctor: ${p.doctor}<br>
-Disease: ${p.disease}<br>
-Location: ${p.place}<br>
-Notes: ${p.notes}<br>
-Date: ${p.date}<br>
-Session: ${p.price}<br>
+Age:${p.age}<br>
+Doctor:${p.doctor}<br>
+Disease:${p.disease}<br>
+Location:${p.place}<br>
+Notes:${p.notes}<br>
+Date:${p.date}<br>
+Price:${p.price}<br>
 
-${p.images.map(img => `<img src="${img}" width="100">`).join("")}
+${p.images.map(x=>`<img src="${x}" width="100">`).join("")}
 
 <br>
-<button onclick="deletePatient(${i})">Delete</button>
+<button onclick="del(${i})">Delete</button>
 </div>
 `;
 }
@@ -216,9 +181,9 @@ ${p.images.map(img => `<img src="${img}" width="100">`).join("")}
 }
 
 // DELETE
-function deletePatient(i){
+function del(i){
 patients.splice(i,1);
-localStorage.setItem("patients", JSON.stringify(patients));
+localStorage.setItem("patients",JSON.stringify(patients));
 display();
 }
 
