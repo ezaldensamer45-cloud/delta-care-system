@@ -58,7 +58,7 @@ margin:5px;
 <div id="system" style="display:none;">
 
 <div style="display:flex;align-items:center;gap:10px;">
-<img src="logo.jpg" width="70">
+<img src="https://raw.githubusercontent.com/ezaldensamer45-cloud/delta-care-system/main/logo.jpg" width="70">
 <h2>Delta Care System</h2>
 </div>
 
@@ -81,11 +81,10 @@ margin:5px;
 
 <br>
 
-<button id="addBtn">Add</button>
+<button onclick="addPatient()">Add</button>
 
 <hr>
 
-<h3>Search</h3>
 <input id="search" oninput="display()" placeholder="Search...">
 
 <div id="list"></div>
@@ -96,54 +95,48 @@ margin:5px;
 
 <script>
 
+// بيانات
 let patients = JSON.parse(localStorage.getItem("patients")) || [];
 
 // LOGIN
 function login(){
-let u = document.getElementById("user").value;
-let p = document.getElementById("pass").value;
-
-if(u === "admin" && p === "1234"){
-document.getElementById("loginBox").style.display = "none";
-document.getElementById("system").style.display = "block";
+if(user.value === "admin" && pass.value === "1234"){
+loginBox.style.display="none";
+system.style.display="block";
 display();
 }else{
 alert("Wrong login");
 }
 }
 
-// ADD BUTTON FIX
-document.getElementById("addBtn").onclick = addPatient;
-
 // ADD
 function addPatient(){
 
-let name = document.getElementById("name").value;
+let nameVal = document.getElementById("name").value;
 
-if(name === ""){
+if(nameVal === ""){
 alert("اكتب الاسم");
 return;
 }
 
 let files = document.getElementById("images").files;
-let images = [];
+let imagesArr = [];
 
 if(files.length > 0){
 
 let loaded = 0;
 
 for(let i=0;i<files.length;i++){
-
 let reader = new FileReader();
 
 reader.onload = function(e){
-images.push(e.target.result);
+imagesArr.push(e.target.result);
 loaded++;
 
 if(loaded === files.length){
-savePatient(images);
+savePatient(imagesArr);
 }
-}
+};
 
 reader.readAsDataURL(files[i]);
 }
@@ -155,7 +148,7 @@ savePatient([]);
 }
 
 // SAVE
-function savePatient(images){
+function savePatient(imagesArr){
 
 let p = {
 name: name.value,
@@ -166,7 +159,7 @@ place: place.value,
 notes: notes.value,
 date: date.value,
 price: price.value,
-images: images
+images: imagesArr
 };
 
 patients.push(p);
