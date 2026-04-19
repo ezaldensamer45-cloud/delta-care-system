@@ -7,14 +7,12 @@
 <style>
 body{
 font-family:Arial;
-background:#0f172a url("logo.png") center/cover no-repeat;
+background:#0f172a;
 color:white;
 margin:0;
 }
 
 .overlay{
-background:rgba(0,0,0,0.7);
-min-height:100vh;
 padding:20px;
 }
 
@@ -36,23 +34,34 @@ padding:10px;
 margin:10px 0;
 border-radius:10px;
 }
+
+img{
+border-radius:10px;
+margin:5px;
+}
 </style>
+
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="loginBox" style="text-align:center;">
+<div class="overlay">
+
+<!-- 🔐 LOGIN -->
+<div id="loginBox">
 <h2>Login</h2>
 <input id="user" placeholder="Username"><br>
 <input id="pass" type="password" placeholder="Password"><br>
 <button onclick="login()">Login</button>
 </div>
 
-<!-- APP -->
-<div id="app" class="overlay" style="display:none;">
+<!-- 🏥 SYSTEM -->
+<div id="system" style="display:none;">
 
+<div style="display:flex;align-items:center;gap:10px;">
+<img src="logo.jpg" width="70">
 <h2>Delta Care System</h2>
+</div>
 
 <h3>Add Patient</h3>
 
@@ -69,7 +78,7 @@ border-radius:10px;
 
 <br>
 
-<input type="file" id="image">
+<input type="file" id="images" multiple>
 
 <br>
 
@@ -77,44 +86,66 @@ border-radius:10px;
 
 <hr>
 
-<h3>Patients</h3>
+<h3>Search</h3>
+<input id="search" oninput="display()" placeholder="Search...">
+
 <div id="list"></div>
 
 </div>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+</div>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyDUyPh2DVnkrDSFF_1YWptAplKJE8jdckc",
-  authDomain: "delta-care-3cadc.firebaseapp.com",
-  projectId: "delta-care-3cadc",
-  storageBucket: "delta-care-3cadc.firebasestorage.app",
-  messagingSenderId: "994601391598",
-  appId: "1:994601391598:web:98fbca752208b8c2842aff"
-};
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+let patients = JSON.parse(localStorage.getItem("patients")) || [];
 
-// LOGIN
+// 🔐 LOGIN
 function login(){
-if(user.value === "admin" && pass.value === "1234"){
-loginBox.style.display="none";
-app.style.display="block";
+let u = document.getElementById("user").value;
+let p = document.getElementById("pass").value;
+
+if(u === "admin" && p === "1234"){
+document.getElementById("loginBox").style.display = "none";
+document.getElementById("system").style.display = "block";
 display();
 }else{
 alert("Wrong login");
 }
 }
 
-// ADD
+// ➕ ADD
 function addPatient(){
 
-let file = document.getElementById("image").files[0];
+let files = document.getElementById("images").files;
+
+let images = [];
+
+if(files.length > 0){
+let loaded = 0;
+
+for(let i=0;i<files.length;i++){
+let reader = new FileReader();
+
+reader.onload = function(e){
+images.push(e.target.result);
+loaded++;
+
+if(loaded === files.length){
+savePatient(images);
+}
+}
+
+reader.readAsDataURL(files[i]);
+}
+
+}else{
+savePatient([]);
+}
+
+}
+
+// 💾 SAVE
+function savePatient(images){
 
 let p = {
 name: name.value,
@@ -124,50 +155,69 @@ disease: disease.value,
 place: place.value,
 notes: notes.value,
 date: date.value,
-price: price.value
+price: price.value,
+images: images
 };
 
-if(file){
+patients.push(p);
+localStorage.setItem("patients", JSON.stringify(patients));
 
-let storageRef = firebase.storage().ref("images/" + file.name);
-
-storageRef.put(file).then(snapshot=>{
-return snapshot.ref.getDownloadURL();
-}).then(url=>{
-
-p.image = url;
-
-db.collection("patients").add(p).then(()=>{
 display();
-});
-
-});
-
-}else{
-db.collection("patients").add(p).then(()=>{
-display();
-});
-}
+clearInputs();
 
 }
 
-// DISPLAY
+// 🧹 CLEAR
+function clearInputs(){
+name.value="";
+age.value="";
+doctor.value="";
+disease.value="";
+place.value="";
+notes.value="";
+date.value="";
+price.value="";
+images.value="";
+}
+
+// 📋 DISPLAY
 function display(){
-list.innerHTML="";
 
-db.collection("patients").get().then(data=>{
-data.forEach(doc=>{
-let p = doc.data();
+let s = search.value.toLowerCase();
+list.innerHTML = "";
+
+patients.forEach((p,i)=>{
+
+if(p.name.toLowerCase().includes(s)){
 
 list.innerHTML += `
 <div class="card">
-<p>${p.name}</p>
-<p>${p.disease}</p>
-${p.image ? `<img src="${p.image}" width="100">` : ""}
+<b>${p.name}</b><br>
+Age: ${p.age}<br>
+Doctor: ${p.doctor}<br>
+Disease: ${p.disease}<br>
+Location: ${p.place}<br>
+Notes: ${p.notes}<br>
+Date: ${p.date}<br>
+Session: ${p.price}<br>
+
+${p.images.map(img => `<img src="${img}" width="100">`).join("")}
+
+<br>
+<button onclick="deletePatient(${i})">Delete</button>
 </div>
 `;
+}
+
 });
-});
+
+}
+
+// ❌ DELETE
+function deletePatient(i){
+patients.splice(i,1);
+localStorage.setItem("patients", JSON.stringify(patients));
+display();
 }
 
 </script>
