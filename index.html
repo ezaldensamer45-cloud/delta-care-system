@@ -7,7 +7,7 @@
 <style>
 body{
 font-family:Arial;
-background:#0f172a;
+background:#0f172a url("logo.png") center/cover no-repeat;
 color:white;
 margin:0;
 }
@@ -41,7 +41,16 @@ border-radius:10px;
 
 <body>
 
-<div class="overlay">
+<!-- LOGIN -->
+<div id="loginBox" style="text-align:center;">
+<h2>Login</h2>
+<input id="user" placeholder="Username"><br>
+<input id="pass" type="password" placeholder="Password"><br>
+<button onclick="login()">Login</button>
+</div>
+
+<!-- APP -->
+<div id="app" class="overlay" style="display:none;">
 
 <h2>Delta Care System</h2>
 
@@ -60,6 +69,10 @@ border-radius:10px;
 
 <br>
 
+<input type="file" id="image">
+
+<br>
+
 <button onclick="addPatient()">Add</button>
 
 <hr>
@@ -72,6 +85,7 @@ border-radius:10px;
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
 <script>
 const firebaseConfig = {
@@ -86,59 +100,76 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+// LOGIN
+function login(){
+if(user.value === "admin" && pass.value === "1234"){
+loginBox.style.display="none";
+app.style.display="block";
+display();
+}else{
+alert("Wrong login");
+}
+}
+
 // ADD
 function addPatient(){
+
+let file = document.getElementById("image").files[0];
+
 let p = {
-name: document.getElementById("name").value,
-age: document.getElementById("age").value,
-doctor: document.getElementById("doctor").value,
-disease: document.getElementById("disease").value,
-place: document.getElementById("place").value,
-notes: document.getElementById("notes").value,
-date: document.getElementById("date").value,
-price: document.getElementById("price").value
+name: name.value,
+age: age.value,
+doctor: doctor.value,
+disease: disease.value,
+place: place.value,
+notes: notes.value,
+date: date.value,
+price: price.value
 };
 
+if(file){
+
+let storageRef = firebase.storage().ref("images/" + file.name);
+
+storageRef.put(file).then(snapshot=>{
+return snapshot.ref.getDownloadURL();
+}).then(url=>{
+
+p.image = url;
+
 db.collection("patients").add(p).then(()=>{
-alert("Added ✅");
+display();
+});
+
+});
+
+}else{
+db.collection("patients").add(p).then(()=>{
 display();
 });
 }
 
+}
+
 // DISPLAY
 function display(){
-document.getElementById("list").innerHTML="";
+list.innerHTML="";
 
-db.collection("patients").get().then((data)=>{
+db.collection("patients").get().then(data=>{
 data.forEach(doc=>{
 let p = doc.data();
 
-document.getElementById("list").innerHTML += `
+list.innerHTML += `
 <div class="card">
-<p>Name: ${p.name}</p>
-<p>Age: ${p.age}</p>
-<p>Doctor: ${p.doctor}</p>
-<p>Disease: ${p.disease}</p>
-<p>Location: ${p.place}</p>
-<p>Notes: ${p.notes}</p>
-<p>Date: ${p.date}</p>
-<p>Price: ${p.price}</p>
-
-<button onclick="deletePatient('${doc.id}')">Delete</button>
+<p>${p.name}</p>
+<p>${p.disease}</p>
+${p.image ? `<img src="${p.image}" width="100">` : ""}
 </div>
 `;
 });
 });
 }
 
-// DELETE
-function deletePatient(id){
-db.collection("patients").doc(id).delete().then(()=>{
-display();
-});
-}
-
-display();
 </script>
 
 </body>
