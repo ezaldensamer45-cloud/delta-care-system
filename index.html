@@ -40,14 +40,13 @@ border-radius:10px;
 margin:5px;
 }
 </style>
-
 </head>
 
 <body>
 
 <div class="overlay">
 
-<!-- 🔐 LOGIN -->
+<!-- LOGIN -->
 <div id="loginBox">
 <h2>Login</h2>
 <input id="user" placeholder="Username"><br>
@@ -55,7 +54,7 @@ margin:5px;
 <button onclick="login()">Login</button>
 </div>
 
-<!-- 🏥 SYSTEM -->
+<!-- SYSTEM -->
 <div id="system" style="display:none;">
 
 <div style="display:flex;align-items:center;gap:10px;">
@@ -82,7 +81,7 @@ margin:5px;
 
 <br>
 
-<button onclick="addPatient()">Add</button>
+<button id="addBtn">Add</button>
 
 <hr>
 
@@ -99,7 +98,7 @@ margin:5px;
 
 let patients = JSON.parse(localStorage.getItem("patients")) || [];
 
-// 🔐 LOGIN
+// LOGIN
 function login(){
 let u = document.getElementById("user").value;
 let p = document.getElementById("pass").value;
@@ -113,17 +112,28 @@ alert("Wrong login");
 }
 }
 
-// ➕ ADD
+// ADD BUTTON FIX
+document.getElementById("addBtn").onclick = addPatient;
+
+// ADD
 function addPatient(){
 
-let files = document.getElementById("images").files;
+let name = document.getElementById("name").value;
 
+if(name === ""){
+alert("اكتب الاسم");
+return;
+}
+
+let files = document.getElementById("images").files;
 let images = [];
 
 if(files.length > 0){
+
 let loaded = 0;
 
 for(let i=0;i<files.length;i++){
+
 let reader = new FileReader();
 
 reader.onload = function(e){
@@ -144,7 +154,7 @@ savePatient([]);
 
 }
 
-// 💾 SAVE
+// SAVE
 function savePatient(images){
 
 let p = {
@@ -164,10 +174,9 @@ localStorage.setItem("patients", JSON.stringify(patients));
 
 display();
 clearInputs();
-
 }
 
-// 🧹 CLEAR
+// CLEAR
 function clearInputs(){
 name.value="";
 age.value="";
@@ -180,7 +189,7 @@ price.value="";
 images.value="";
 }
 
-// 📋 DISPLAY
+// DISPLAY
 function display(){
 
 let s = search.value.toLowerCase();
@@ -213,7 +222,7 @@ ${p.images.map(img => `<img src="${img}" width="100">`).join("")}
 
 }
 
-// ❌ DELETE
+// DELETE
 function deletePatient(i){
 patients.splice(i,1);
 localStorage.setItem("patients", JSON.stringify(patients));
