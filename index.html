@@ -58,7 +58,8 @@ margin-top:10px;
 <script>
 let patients = JSON.parse(localStorage.getItem("patients")) || [];
 function addPatient(){
-let name = document.getElementById("name").value;
+
+let name = document.getElementById("name").value.trim();
 let age = document.getElementById("age").value;
 let doctor = document.getElementById("doctor").value;
 let disease = document.getElementById("disease").value;
@@ -67,9 +68,43 @@ let date = document.getElementById("date").value;
 let price = document.getElementById("price").value;
 let materials = document.getElementById("materials").value;
 let notes = document.getElementById("notes").value;
+
+if(name === ""){
+alert("اكتب الاسم");
+return;
+}
+
 let files = document.getElementById("images").files;
 let images = [];
+
 if(files.length === 0){
+savePatient(images,name,age,doctor,disease,place,date,price,materials,notes);
+return;
+}
+
+let count = 0;
+
+for(let i=0;i<files.length;i++){
+
+let reader = new FileReader();
+
+reader.onload = function(e){
+images.push(e.target.result);
+count++;
+
+if(count === files.length){
+savePatient(images,name,age,doctor,disease,place,date,price,materials,notes);
+}
+};
+
+reader.onerror = function(){
+count++;
+};
+
+reader.readAsDataURL(files[i]);
+}
+
+}
 savePatient(images,name,age,doctor,disease,place,date,price,materials,notes);
 return;
 }
