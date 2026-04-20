@@ -59,25 +59,26 @@ margin-top:10px;
 let patients = JSON.parse(localStorage.getItem("patients")) || [];
 function addPatient(){
 
-let name = document.getElementById("name").value.trim();
-let age = document.getElementById("age").value;
-let doctor = document.getElementById("doctor").value;
-let disease = document.getElementById("disease").value;
-let place = document.getElementById("place").value;
-let date = document.getElementById("date").value;
-let price = document.getElementById("price").value;
-let materials = document.getElementById("materials").value;
-let notes = document.getElementById("notes").value;
+let name = document.getElementById("name").value;
+
+alert("الزر اشتغل ✅");
 
 if(name === ""){
-alert("اكتب الاسم");
+alert("اكتب اسم");
 return;
 }
 
-let files = document.getElementById("images").files;
-let images = [];
+let patient = {
+name: name,
+age: document.getElementById("age").value
+};
 
-if(files.length === 0){
+patients.push(patient);
+
+localStorage.setItem("patients", JSON.stringify(patients));
+
+display();
+}
 savePatient(images,name,age,doctor,disease,place,date,price,materials,notes);
 return;
 }
