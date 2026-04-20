@@ -2,78 +2,187 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>Delta Care</title>
+<title>Delta Care System</title>
+
+<style>
+body{font-family:Arial;background:#0f172a;color:white;margin:0}
+.overlay{padding:20px}
+input{padding:8px;margin:5px;width:180px}
+button{padding:8px 15px;margin:5px;cursor:pointer}
+.card{background:#1e293b;padding:10px;margin:10px 0;border-radius:10px}
+img{margin:5px;border-radius:8px}
+</style>
 </head>
 
-<body style="background:#0f172a;color:white;font-family:Arial">
+<body>
 
+<div class="overlay">
+
+<!-- LOGIN -->
+<div id="loginBox">
 <h2>Login</h2>
-<input id="user" placeholder="user">
-<input id="pass" type="password" placeholder="pass">
+<input id="user" placeholder="Username">
+<input id="pass" type="password" placeholder="Password">
 <button onclick="login()">Login</button>
+</div>
 
-<div id="app" style="display:none">
+<!-- SYSTEM -->
+<div id="system" style="display:none">
 
-<h2>Delta Care</h2>
+<div style="display:flex;align-items:center;gap:10px;">
+<img src="https://raw.githubusercontent.com/ezaldensamer45-cloud/delta-care-system/main/logo.jpg" width="70">
+<h2>Delta Care System</h2>
+</div>
+
+<h3>Add Patient</h3>
 
 <input id="name" placeholder="Name">
 <input id="age" placeholder="Age">
+<input id="doctor" placeholder="Doctor">
+<input id="disease" placeholder="Disease">
+<input id="place" placeholder="Location">
+<input id="notes" placeholder="Notes">
+<input id="date" type="date">
+<input id="price" placeholder="Price">
 
-<button onclick="add()">Add</button>
+<br>
+<input type="file" id="images" multiple>
+<br>
 
+<button onclick="addPatient()">Add</button>
+
+<hr>
+
+<input id="search" oninput="display()" placeholder="Search">
 <div id="list"></div>
+
+</div>
 
 </div>
 
 <script>
 
-let data = JSON.parse(localStorage.getItem("data")) || [];
+let patients = JSON.parse(localStorage.getItem("patients")) || [];
 
+// LOGIN (مصلح)
 function login(){
-if(user.value=="admin" && pass.value=="1234"){
-app.style.display="block";
-show();
+if(user.value==="admin" && pass.value==="1234"){
+loginBox.style.display="none";
+system.style.display="block";
+display();
 }else{
-alert("wrong");
+alert("Wrong login");
 }
 }
 
-function add(){
+// ADD
+function addPatient(){
 
-if(name.value==""){
-alert("اكتب اسم");
+if(name.value===""){
+alert("اكتب الاسم");
 return;
 }
 
-data.push({
-name:name.value,
-age:age.value
-});
+let files = images.files;
+let imgs = [];
 
-localStorage.setItem("data",JSON.stringify(data));
+if(files.length>0){
+let count=0;
 
-show();
+for(let i=0;i<files.length;i++){
+let reader=new FileReader();
 
-name.value="";
-age.value="";
+reader.onload=function(e){
+imgs.push(e.target.result);
+count++;
+
+if(count===files.length){
+save(imgs);
+}
 }
 
-function show(){
+reader.readAsDataURL(files[i]);
+}
+
+}else{
+save([]);
+}
+
+}
+
+// SAVE
+function save(imgs){
+
+let p={
+name:name.value,
+age:age.value,
+doctor:doctor.value,
+disease:disease.value,
+place:place.value,
+notes:notes.value,
+date:date.value,
+price:price.value,
+images:imgs
+};
+
+patients.push(p);
+localStorage.setItem("patients",JSON.stringify(patients));
+
+display();
+clearInputs();
+}
+
+// CLEAR
+function clearInputs(){
+name.value="";
+age.value="";
+doctor.value="";
+disease.value="";
+place.value="";
+notes.value="";
+date.value="";
+price.value="";
+images.value="";
+}
+
+// DISPLAY
+function display(){
+
+let s = search.value.toLowerCase();
 list.innerHTML="";
-data.forEach((p,i)=>{
+
+patients.forEach((p,i)=>{
+
+if(p.name.toLowerCase().includes(s)){
+
 list.innerHTML+=`
-<div>
-${p.name} - ${p.age}
+<div class="card">
+<b>${p.name}</b><br>
+Age:${p.age}<br>
+Doctor:${p.doctor}<br>
+Disease:${p.disease}<br>
+Location:${p.place}<br>
+Notes:${p.notes}<br>
+Date:${p.date}<br>
+Price:${p.price}<br>
+
+${p.images.map(x=>`<img src="${x}" width="100">`).join("")}
+
+<br>
 <button onclick="del(${i})">Delete</button>
 </div>
 `;
-});
 }
 
+});
+
+}
+
+// DELETE
 function del(i){
-data.splice(i,1);
-localStorage.setItem("data",JSON.stringify(data));
-show();
+patients.splice(i,1);
+localStorage.setItem("patients",JSON.stringify(patients));
+display();
 }
 
 </script>
