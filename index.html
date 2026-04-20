@@ -1,15 +1,81 @@
 <!DOCTYPE html>
-<html>
-<body>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>Delta Care</title>
+</head>
 
-<h2>Test</h2>
+<body style="background:#0f172a;color:white;font-family:Arial">
 
-<button onclick="test()">Click</button>
+<h2>Login</h2>
+<input id="user" placeholder="user">
+<input id="pass" type="password" placeholder="pass">
+<button onclick="login()">Login</button>
+
+<div id="app" style="display:none">
+
+<h2>Delta Care</h2>
+
+<input id="name" placeholder="Name">
+<input id="age" placeholder="Age">
+
+<button onclick="add()">Add</button>
+
+<div id="list"></div>
+
+</div>
 
 <script>
-function test(){
-  alert("يشتغل ✅");
+
+let data = JSON.parse(localStorage.getItem("data")) || [];
+
+function login(){
+if(user.value=="admin" && pass.value=="1234"){
+app.style.display="block";
+show();
+}else{
+alert("wrong");
 }
+}
+
+function add(){
+
+if(name.value==""){
+alert("اكتب اسم");
+return;
+}
+
+data.push({
+name:name.value,
+age:age.value
+});
+
+localStorage.setItem("data",JSON.stringify(data));
+
+show();
+
+name.value="";
+age.value="";
+}
+
+function show(){
+list.innerHTML="";
+data.forEach((p,i)=>{
+list.innerHTML+=`
+<div>
+${p.name} - ${p.age}
+<button onclick="del(${i})">Delete</button>
+</div>
+`;
+});
+}
+
+function del(i){
+data.splice(i,1);
+localStorage.setItem("data",JSON.stringify(data));
+show();
+}
+
 </script>
 
 </body>
