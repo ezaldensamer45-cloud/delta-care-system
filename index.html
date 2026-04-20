@@ -2,105 +2,51 @@
 
 let patients = JSON.parse(localStorage.getItem("patients")) || [];
 
-// 🔥 ADD (مصلح 100%)
 function addPatient(){
 
 let name = document.getElementById("name").value.trim();
 let age = document.getElementById("age").value;
-let doctor = document.getElementById("doctor").value;
-let disease = document.getElementById("disease").value;
-let place = document.getElementById("place").value;
-let date = document.getElementById("date").value;
-let price = document.getElementById("price").value;
-let materials = document.getElementById("materials").value;
-let notes = document.getElementById("notes").value;
 
 if(name === ""){
 alert("اكتب الاسم");
 return;
 }
 
-let files = document.getElementById("images").files;
-let images = [];
-
-// بدون صور
-if(files.length === 0){
-savePatient(images,name,age,doctor,disease,place,date,price,materials,notes);
-return;
-}
-
-// مع صور
-let count = 0;
-
-for(let i=0;i<files.length;i++){
-
-let reader = new FileReader();
-
-reader.onload = function(e){
-images.push(e.target.result);
-count++;
-
-if(count === files.length){
-savePatient(images,name,age,doctor,disease,place,date,price,materials,notes);
-}
-};
-
-reader.readAsDataURL(files[i]);
-}
-
-}
-
-// SAVE
-function savePatient(images,name,age,doctor,disease,place,date,price,materials,notes){
-
 let patient = {
 name:name,
 age:age,
-doctor:doctor,
-disease:disease,
-place:place,
-date:date,
-price:price,
-materials:materials,
-notes:notes,
-images:images
+images:[]
 };
 
 patients.push(patient);
+
 localStorage.setItem("patients", JSON.stringify(patients));
 
-clearFields();
 display();
+clearFields();
 }
 
-// CLEAR
 function clearFields(){
 document.querySelectorAll("input").forEach(i=>i.value="");
 }
 
-// DELETE
 function deletePatient(i){
 patients.splice(i,1);
 localStorage.setItem("patients", JSON.stringify(patients));
 display();
 }
 
-// TOGGLE
 function toggleDetails(el){
 let d = el.querySelector(".details");
 d.style.display = d.style.display === "block" ? "none" : "block";
 }
 
-// DISPLAY
 function display(){
 
-let s = document.getElementById("search").value.toLowerCase();
 let list = document.getElementById("list");
 list.innerHTML = "";
 
-patients
-.filter(p => p.name.toLowerCase().includes(s))
-.forEach((p,i)=>{
+patients.forEach((p,i)=>{
 
 list.innerHTML += `
 <div class="card" onclick="toggleDetails(this)">
@@ -108,17 +54,8 @@ list.innerHTML += `
 
 <div class="details">
 <p>Age: ${p.age}</p>
-<p>Doctor: ${p.doctor}</p>
-<p>Disease: ${p.disease}</p>
-<p>Location: ${p.place}</p>
-<p>Date: ${p.date}</p>
-<p>Session: ${p.price} IQD</p>
-<p>Materials: ${p.materials}</p>
-<p>Notes: ${p.notes}</p>
 
-${(p.images || []).map(img=>`<img src="${img}" width="100">`).join("")}
-
-<br><br>
+<br>
 <button onclick="event.stopPropagation(); deletePatient(${i})">Delete</button>
 
 </div>
