@@ -2,187 +2,94 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>Delta Care System</title>
+<title>Delta Care</title>
 
 <style>
-body{font-family:Arial;background:#0f172a;color:white;margin:0}
-.overlay{padding:20px}
-input{padding:8px;margin:5px;width:180px}
-button{padding:8px 15px;margin:5px;cursor:pointer}
-.card{background:#1e293b;padding:10px;margin:10px 0;border-radius:10px}
-img{margin:5px;border-radius:8px}
+body{background:#0f172a;color:white;font-family:Arial;padding:20px}
+input,button{margin:5px;padding:8px}
+.card{background:#1e293b;padding:10px;margin:10px 0}
 </style>
 </head>
 
 <body>
 
-<div class="overlay">
-
 <!-- LOGIN -->
-<div id="loginBox">
+<div id="login">
 <h2>Login</h2>
-<input id="user" placeholder="Username">
-<input id="pass" type="password" placeholder="Password">
-<button onclick="login()">Login</button>
+<input id="u" placeholder="user">
+<input id="p" type="password" placeholder="pass">
+<button onclick="log()">Login</button>
 </div>
 
-<!-- SYSTEM -->
-<div id="system" style="display:none">
+<!-- APP -->
+<div id="app" style="display:none">
 
-<div style="display:flex;align-items:center;gap:10px;">
-<img src="https://raw.githubusercontent.com/ezaldensamer45-cloud/delta-care-system/main/logo.jpg" width="70">
-<h2>Delta Care System</h2>
-</div>
+<h2>Delta Care</h2>
 
-<h3>Add Patient</h3>
+<!-- 🔴 لوجو مضمون -->
+<img src="https://via.placeholder.com/100" width="100">
+
+<br><br>
 
 <input id="name" placeholder="Name">
 <input id="age" placeholder="Age">
-<input id="doctor" placeholder="Doctor">
-<input id="disease" placeholder="Disease">
-<input id="place" placeholder="Location">
-<input id="notes" placeholder="Notes">
-<input id="date" type="date">
-<input id="price" placeholder="Price">
 
-<br>
-<input type="file" id="images" multiple>
-<br>
+<button onclick="add()">Add</button>
 
-<button onclick="addPatient()">Add</button>
-
-<hr>
-
-<input id="search" oninput="display()" placeholder="Search">
 <div id="list"></div>
-
-</div>
 
 </div>
 
 <script>
 
-let patients = JSON.parse(localStorage.getItem("patients")) || [];
+let data = JSON.parse(localStorage.getItem("data")) || [];
 
-// LOGIN (مصلح)
-function login(){
-if(user.value==="admin" && pass.value==="1234"){
-loginBox.style.display="none";
-system.style.display="block";
-display();
+function log(){
+if(u.value==="admin" && p.value==="1234"){
+login.style.display="none";
+app.style.display="block";
+show();
 }else{
-alert("Wrong login");
+alert("خطأ");
 }
 }
 
-// ADD
-function addPatient(){
+function add(){
 
 if(name.value===""){
-alert("اكتب الاسم");
+alert("اكتب اسم");
 return;
 }
 
-let files = images.files;
-let imgs = [];
-
-if(files.length>0){
-let count=0;
-
-for(let i=0;i<files.length;i++){
-let reader=new FileReader();
-
-reader.onload=function(e){
-imgs.push(e.target.result);
-count++;
-
-if(count===files.length){
-save(imgs);
-}
-}
-
-reader.readAsDataURL(files[i]);
-}
-
-}else{
-save([]);
-}
-
-}
-
-// SAVE
-function save(imgs){
-
-let p={
+data.push({
 name:name.value,
-age:age.value,
-doctor:doctor.value,
-disease:disease.value,
-place:place.value,
-notes:notes.value,
-date:date.value,
-price:price.value,
-images:imgs
-};
+age:age.value
+});
 
-patients.push(p);
-localStorage.setItem("patients",JSON.stringify(patients));
+localStorage.setItem("data",JSON.stringify(data));
 
-display();
-clearInputs();
-}
+show();
 
-// CLEAR
-function clearInputs(){
 name.value="";
 age.value="";
-doctor.value="";
-disease.value="";
-place.value="";
-notes.value="";
-date.value="";
-price.value="";
-images.value="";
 }
 
-// DISPLAY
-function display(){
-
-let s = search.value.toLowerCase();
+function show(){
 list.innerHTML="";
-
-patients.forEach((p,i)=>{
-
-if(p.name.toLowerCase().includes(s)){
-
+data.forEach((x,i)=>{
 list.innerHTML+=`
 <div class="card">
-<b>${p.name}</b><br>
-Age:${p.age}<br>
-Doctor:${p.doctor}<br>
-Disease:${p.disease}<br>
-Location:${p.place}<br>
-Notes:${p.notes}<br>
-Date:${p.date}<br>
-Price:${p.price}<br>
-
-${p.images.map(x=>`<img src="${x}" width="100">`).join("")}
-
-<br>
+${x.name} - ${x.age}
 <button onclick="del(${i})">Delete</button>
 </div>
 `;
-}
-
 });
-
 }
 
-// DELETE
 function del(i){
-patients.splice(i,1);
-localStorage.setItem("patients",JSON.stringify(patients));
-display();
+data.splice(i,1);
+localStorage.setItem("data",JSON.stringify(data));
+show();
 }
 
 </script>
