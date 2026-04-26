@@ -1,16 +1,65 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>Delta Care</title>
+
+<style>
+body{font-family:Arial;background:#0f172a;color:white;padding:20px}
+input,button{padding:10px;margin:5px;border-radius:6px;border:none}
+button{background:#16a34a;color:white}
+.card{background:#1e293b;padding:10px;margin:10px 0;border-radius:8px}
+</style>
+</head>
+
 <body>
 
-<h2>Test Button</h2>
+<h2>Delta Care</h2>
 
-<input id="name" placeholder="Name">
-<button onclick="add()">Add</button>
+<input id="name" placeholder="اسم المريض">
+<input id="age" placeholder="العمر">
+
+<button onclick="addPatient()">➕ إضافة</button>
+
+<hr>
+
+<div id="list"></div>
 
 <script>
-function add(){
-alert("اشتغل الزر ✅");
+
+let patients = JSON.parse(localStorage.getItem("patients")) || [];
+
+function addPatient(){
+
+let name = document.getElementById("name").value;
+
+if(name === ""){
+alert("اكتب الاسم");
+return;
 }
+
+patients.push({
+name:name,
+age:document.getElementById("age").value
+});
+
+localStorage.setItem("patients", JSON.stringify(patients));
+
+display();
+}
+
+function display(){
+
+list.innerHTML = "";
+
+patients.forEach(p=>{
+list.innerHTML += `<div class="card">${p.name} - ${p.age}</div>`;
+});
+
+}
+
+display();
+
 </script>
 
 </body>
