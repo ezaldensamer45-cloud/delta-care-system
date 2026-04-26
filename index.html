@@ -86,19 +86,28 @@ let patients = JSON.parse(localStorage.getItem("patients")) || [];
 // ADD
 function addPatient(){
 
-let p = {
-name:name.value,
-age:age.value,
-doctor:doctor.value,
-disease:disease.value,
-place:place.value,
-date:date.value,
-price:price.value,
-materials:materials.value,
-notes:notes.value,
-images:[],
-sessions:[]
+let name = document.getElementById("name").value.trim();
+
+if(name === ""){
+alert("اكتب اسم المريض");
+return;
+}
+
+let patient = {
+name: name,
+age: document.getElementById("age").value
 };
+
+let patients = JSON.parse(localStorage.getItem("patients")) || [];
+
+patients.push(patient);
+
+localStorage.setItem("patients", JSON.stringify(patients));
+
+alert("تمت الإضافة ✅");
+
+location.reload();
+}
 
 let files = images.files;
 
