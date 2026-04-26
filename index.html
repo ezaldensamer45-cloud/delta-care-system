@@ -1,10 +1,46 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>Delta Care</title>
+
+<style>
+body{
+font-family:Arial;
+background:#0f172a;
+color:white;
+padding:20px;
+}
+input,button{
+padding:10px;
+margin:5px;
+}
+.card{
+background:#1e293b;
+padding:10px;
+margin:10px 0;
+border-radius:8px;
+}
+</style>
+
+</head>
+<body>
+
+<h2>Delta Care</h2>
+
+<input id="name" placeholder="Name">
+<input id="age" placeholder="Age">
+<button onclick="addPatient()">Add</button>
+
+<div id="list"></div>
+
 <script>
 
-let patients = JSON.parse(localStorage.getItem("patients")) || [];
+let patients = [];
 
 function addPatient(){
 
-let name = document.getElementById("name").value.trim();
+let name = document.getElementById("name").value;
 let age = document.getElementById("age").value;
 
 if(name === ""){
@@ -12,33 +48,9 @@ alert("اكتب الاسم");
 return;
 }
 
-let patient = {
-name:name,
-age:age,
-images:[]
-};
-
-patients.push(patient);
-
-localStorage.setItem("patients", JSON.stringify(patients));
-
+patients.push({name, age});
 display();
-clearFields();
-}
 
-function clearFields(){
-document.querySelectorAll("input").forEach(i=>i.value="");
-}
-
-function deletePatient(i){
-patients.splice(i,1);
-localStorage.setItem("patients", JSON.stringify(patients));
-display();
-}
-
-function toggleDetails(el){
-let d = el.querySelector(".details");
-d.style.display = d.style.display === "block" ? "none" : "block";
 }
 
 function display(){
@@ -46,26 +58,13 @@ function display(){
 let list = document.getElementById("list");
 list.innerHTML = "";
 
-patients.forEach((p,i)=>{
-
-list.innerHTML += `
-<div class="card" onclick="toggleDetails(this)">
-<h3>${p.name}</h3>
-
-<div class="details">
-<p>Age: ${p.age}</p>
-
-<br>
-<button onclick="event.stopPropagation(); deletePatient(${i})">Delete</button>
-
-</div>
-</div>
-`;
-
+patients.forEach(p=>{
+list.innerHTML += `<div class="card">${p.name} - ${p.age}</div>`;
 });
 
 }
 
-display();
-
 </script>
+
+</body>
+</html>
