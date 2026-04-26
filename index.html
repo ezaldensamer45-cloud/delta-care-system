@@ -2,60 +2,184 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>Delta Care</title>
+<title>Delta Care System</title>
 
 <style>
-body{font-family:Arial;background:#0f172a;color:white;padding:20px}
-input,button{padding:10px;margin:5px;border-radius:6px;border:none}
-button{background:#16a34a;color:white}
-.card{background:#1e293b;padding:10px;margin:10px 0;border-radius:8px}
-</style>
-</head>
+body{
+font-family:Arial;
+background: url("file_00000000facc7246b6da64fac183c4f1.jpg") no-repeat center center fixed;
+background-size: cover;
+margin:0;
+color:white;
+}
 
+.overlay{
+background: rgba(0,0,0,0.75);
+min-height:100vh;
+padding:20px;
+}
+
+input,button{
+padding:10px;
+margin:5px;
+border-radius:6px;
+border:none;
+}
+
+button{
+background:#22c55e;
+color:white;
+cursor:pointer;
+}
+
+.card{
+background:#1e293b;
+padding:10px;
+margin:10px 0;
+border-radius:8px;
+}
+
+.details{
+display:none;
+margin-top:10px;
+}
+</style>
+
+</head>
 <body>
 
-<h2>Delta Care</h2>
+<div class="overlay">
+
+<h2>Delta Care System</h2>
+
+<button onclick="changeLogin()">🔐 تغيير بيانات الدخول</button>
+
+<h3>إضافة مريض</h3>
 
 <input id="name" placeholder="اسم المريض">
 <input id="age" placeholder="العمر">
 
-<button onclick="addPatient()">➕ إضافة</button>
+<br>
+
+<button onclick="addPatient()">
+➕ إضافة مريض
+</button>
 
 <hr>
 
+<input id="search" oninput="display()" placeholder="بحث">
+
 <div id="list"></div>
+
+</div>
 
 <script>
 
+// ================= LOGIN =================
+if(!localStorage.getItem("user")){
+localStorage.setItem("user","admin");
+localStorage.setItem("pass","1234");
+}
+
+if(!localStorage.getItem("logged")){
+login();
+}
+
+function login(){
+
+let u = prompt("اسم المستخدم");
+let p = prompt("رمز الدخول");
+
+if(u === localStorage.getItem("user") && p === localStorage.getItem("pass")){
+localStorage.setItem("logged","yes");
+}else{
+alert("خطأ ❌");
+login();
+}
+}
+
+function changeLogin(){
+let u = prompt("يوزر جديد");
+let p = prompt("رمز جديد");
+
+if(u && p){
+localStorage.setItem("user",u);
+localStorage.setItem("pass",p);
+alert("تم التغيير ✅");
+}
+}
+
+// ================= DATA =================
 let patients = JSON.parse(localStorage.getItem("patients")) || [];
 
+// ================= ADD =================
 function addPatient(){
 
-let name = document.getElementById("name").value;
+let name = document.getElementById("name").value.trim();
+let age = document.getElementById("age").value;
 
 if(name === ""){
 alert("اكتب الاسم");
 return;
 }
 
-patients.push({
+let p = {
 name:name,
-age:document.getElementById("age").value
-});
+age:age
+};
 
+patients.push(p);
 localStorage.setItem("patients", JSON.stringify(patients));
 
 display();
+clearFields();
 }
 
+// ================= CLEAR =================
+function clearFields(){
+document.querySelectorAll("input").forEach(i=>i.value="");
+}
+
+// ================= DISPLAY =================
 function display(){
 
-list.innerHTML = "";
+let s = document.getElementById("search").value.toLowerCase();
+let list = document.getElementById("list");
 
-patients.forEach(p=>{
-list.innerHTML += `<div class="card">${p.name} - ${p.age}</div>`;
+list.innerHTML="";
+
+patients
+.filter(p=>p.name.toLowerCase().includes(s))
+.forEach((p,i)=>{
+
+list.innerHTML += `
+<div class="card">
+
+<h3 onclick="toggle(this)">${p.name}</h3>
+
+<div class="details">
+<p>العمر: ${p.age}</p>
+
+<button onclick="deletePatient(${i})">🗑 حذف</button>
+</div>
+
+</div>
+`;
+
 });
+}
 
+// ================= TOGGLE =================
+function toggle(el){
+let d = el.parentElement.querySelector(".details");
+d.style.display = d.style.display==="block"?"none":"block";
+}
+
+// ================= DELETE =================
+function deletePatient(i){
+patients.splice(i,1);
+localStorage.setItem("patients", JSON.stringify(patients));
+display();
 }
 
 display();
