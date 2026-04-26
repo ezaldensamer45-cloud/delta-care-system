@@ -2,7 +2,7 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>Delta Care</title>
+<title>Delta Care System</title>
 
 <style>
 body{
@@ -11,58 +11,252 @@ background:#0f172a;
 color:white;
 padding:20px;
 }
+
 input,button{
 padding:10px;
 margin:5px;
+border-radius:6px;
+border:none;
 }
+
+button{
+background:#22c55e;
+color:white;
+cursor:pointer;
+}
+
 .card{
 background:#1e293b;
 padding:10px;
 margin:10px 0;
 border-radius:8px;
 }
+
+.details{
+display:none;
+margin-top:10px;
+}
+
+img{
+width:70px;
+margin:3px;
+border-radius:5px;
+}
 </style>
 
 </head>
 <body>
 
-<h2>Delta Care</h2>
+<img src="logo.jpg" width="120">
 
-<input id="name" placeholder="Name">
-<input id="age" placeholder="Age">
-<button onclick="addPatient()">Add</button>
+<h2>Delta Care System</h2>
+
+<h3>إضافة مريض</h3>
+
+<input id="name" placeholder="اسم المريض">
+<input id="age" placeholder="العمر">
+<input id="doctor" placeholder="الطبيب">
+<input id="disease" placeholder="نوع المرض">
+<input id="place" placeholder="مكان المرض">
+<input id="date" type="date">
+<input id="price" placeholder="سعر الجلسة">
+<input id="materials" placeholder="المواد المستخدمة">
+<input id="notes" placeholder="ملاحظات">
+
+<br>
+
+<input type="file" id="images" multiple>
+
+<br>
+
+<button onclick="addPatient()">إضافة</button>
+
+<hr>
+
+<input id="search" oninput="display()" placeholder="بحث">
 
 <div id="list"></div>
 
 <script>
 
-let patients = [];
+let patients = JSON.parse(localStorage.getItem("patients")) || [];
 
+// ADD
 function addPatient(){
 
-let name = document.getElementById("name").value;
-let age = document.getElementById("age").value;
+let p = {
+name:name.value,
+age:age.value,
+doctor:doctor.value,
+disease:disease.value,
+place:place.value,
+date:date.value,
+price:price.value,
+materials:materials.value,
+notes:notes.value,
+images:[],
+sessions:[]
+};
 
-if(name === ""){
-alert("اكتب الاسم");
+let files = images.files;
+
+if(files.length === 0){
+save(p);
 return;
 }
 
-patients.push({name, age});
-display();
+let count = 0;
+
+for(let i=0;i<files.length;i++){
+let reader = new FileReader();
+
+reader.onload = function(e){
+p.images.push(e.target.result);
+count++;
+
+if(count === files.length){
+save(p);
+}
+};
+
+reader.readAsDataURL(files[i]);
+}
 
 }
 
+// SAVE
+function save(p){
+patients.push(p);
+localStorage.setItem("patients", JSON.stringify(patients));
+display();
+clearFields();
+}
+
+// CLEAR
+function clearFields(){
+document.querySelectorAll("input").forEach(i=>i.value="");
+}
+
+// DISPLAY
 function display(){
 
-let list = document.getElementById("list");
-list.innerHTML = "";
+let s = search.value.toLowerCase();
+list.innerHTML="";
 
-patients.forEach(p=>{
-list.innerHTML += `<div class="card">${p.name} - ${p.age}</div>`;
+patients
+.filter(p=>p.name.toLowerCase().includes(s))
+.forEach((p,i)=>{
+
+list.innerHTML += `
+<div class="card">
+
+<h3 onclick="toggle(this)">${p.name}</h3>
+
+<div class="details">
+
+<p>العمر: ${p.age}</p>
+<p>الطبيب: ${p.doctor}</p>
+<p>المرض: ${p.disease}</p>
+<p>المكان: ${p.place}</p>
+<p>التاريخ: ${p.date}</p>
+<p>السعر: ${p.price}</p>
+<p>المواد: ${p.materials}</p>
+<p>ملاحظات: ${p.notes}</p>
+
+${p.images.map(img=>`<img src="${img}">`).join("")}
+
+<hr>
+
+<button onclick="addSession(${i})">➕ جلسة</button>
+<button onclick="deletePatient(${i})">🗑 حذف</button>
+<button onclick="printPatient(${i})">🖨 طباعة</button>
+
+<div>
+${(p.sessions||[]).map(s=>`
+<div>
+📅 ${s.date} - 💰 ${s.price}
+${(s.images||[]).map(i=>`<img src="${i}">`).join("")}
+</div>
+`).join("")}
+</div>
+
+</div>
+
+</div>
+`;
+
 });
 
 }
+
+// TOGGLE
+function toggle(el){
+let d = el.parentElement.querySelector(".details");
+d.style.display = d.style.display==="block"?"none":"block";
+}
+
+// DELETE
+function deletePatient(i){
+patients.splice(i,1);
+localStorage.setItem("patients", JSON.stringify(patients));
+display();
+}
+
+// ADD SESSION
+function addSession(i){
+
+let date = prompt("تاريخ الجلسة");
+let price = prompt("السعر");
+
+let input = document.createElement("input");
+input.type="file";
+input.multiple=true;
+
+input.onchange = function(){
+
+let files = input.files;
+let imgs=[];
+let count=0;
+
+for(let f of files){
+
+let reader = new FileReader();
+
+reader.onload = function(e){
+imgs.push(e.target.result);
+count++;
+
+if(count === files.length){
+
+patients[i].sessions.push({
+date,price,images:imgs
+});
+
+localStorage.setItem("patients", JSON.stringify(patients));
+display();
+}
+
+};
+
+reader.readAsDataURL(f);
+}
+
+};
+
+input.click();
+}
+
+// PRINT
+function printPatient(i){
+
+let content = document.querySelectorAll(".details")[i].innerHTML;
+let w = window.open("");
+w.document.write(content);
+w.print();
+
+}
+
+display();
 
 </script>
 
