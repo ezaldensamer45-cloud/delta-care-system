@@ -14,7 +14,7 @@ color:white;
 }
 
 .overlay{
-background: rgba(0,0,0,0.75);
+background: rgba(0,0,0,0.85);
 min-height:100vh;
 padding:20px;
 }
@@ -24,6 +24,12 @@ padding:10px;
 margin:5px;
 border-radius:6px;
 border:none;
+}
+
+input{
+background:#0f172a;
+color:white;
+border:1px solid #334155;
 }
 
 button{
@@ -43,6 +49,12 @@ border-radius:8px;
 display:none;
 margin-top:10px;
 }
+
+img{
+width:70px;
+margin:3px;
+border-radius:5px;
+}
 </style>
 
 </head>
@@ -52,18 +64,24 @@ margin-top:10px;
 
 <h2>Delta Care System</h2>
 
-<button onclick="changeLogin()">🔐 تغيير بيانات الدخول</button>
-
 <h3>إضافة مريض</h3>
 
 <input id="name" placeholder="اسم المريض">
 <input id="age" placeholder="العمر">
+<input id="doctor" placeholder="الطبيب">
+<input id="disease" placeholder="نوع المرض">
+<input id="place" placeholder="مكان المرض">
+<input id="date" type="date">
+<input id="price" placeholder="سعر الجلسة">
+<input id="materials" placeholder="المواد المستخدمة">
 
 <br>
 
-<button onclick="addPatient()">
-➕ إضافة مريض
-</button>
+<input type="file" id="images" multiple>
+
+<br>
+
+<button onclick="addPatient()">➕ إضافة مريض</button>
 
 <hr>
 
@@ -75,77 +93,73 @@ margin-top:10px;
 
 <script>
 
-// ================= LOGIN =================
-if(!localStorage.getItem("user")){
-localStorage.setItem("user","admin");
-localStorage.setItem("pass","1234");
-}
-
-if(!localStorage.getItem("logged")){
-login();
-}
-
-function login(){
-
-let u = prompt("اسم المستخدم");
-let p = prompt("رمز الدخول");
-
-if(u === localStorage.getItem("user") && p === localStorage.getItem("pass")){
-localStorage.setItem("logged","yes");
-}else{
-alert("خطأ ❌");
-login();
-}
-}
-
-function changeLogin(){
-let u = prompt("يوزر جديد");
-let p = prompt("رمز جديد");
-
-if(u && p){
-localStorage.setItem("user",u);
-localStorage.setItem("pass",p);
-alert("تم التغيير ✅");
-}
-}
-
-// ================= DATA =================
 let patients = JSON.parse(localStorage.getItem("patients")) || [];
 
-// ================= ADD =================
+// ADD PATIENT
 function addPatient(){
 
-let name = document.getElementById("name").value.trim();
-let age = document.getElementById("age").value;
+let p = {
+name: name.value,
+age: age.value,
+doctor: doctor.value,
+disease: disease.value,
+place: place.value,
+date: date.value,
+price: price.value,
+materials: materials.value,
+images: [],
+sessions: []
+};
 
-if(name === ""){
+if(p.name.trim()==""){
 alert("اكتب الاسم");
 return;
 }
 
-let p = {
-name:name,
-age:age
+let files = images.files;
+
+if(files.length === 0){
+save(p);
+return;
+}
+
+let count = 0;
+
+for(let f of files){
+
+let reader = new FileReader();
+
+reader.onload = function(e){
+p.images.push(e.target.result);
+count++;
+
+if(count === files.length){
+save(p);
+}
 };
 
+reader.readAsDataURL(f);
+}
+
+}
+
+// SAVE
+function save(p){
 patients.push(p);
 localStorage.setItem("patients", JSON.stringify(patients));
-
 display();
 clearFields();
 }
 
-// ================= CLEAR =================
+// CLEAR
 function clearFields(){
 document.querySelectorAll("input").forEach(i=>i.value="");
 }
 
-// ================= DISPLAY =================
+// DISPLAY
 function display(){
 
-let s = document.getElementById("search").value.toLowerCase();
-let list = document.getElementById("list");
-
+let s = search.value.toLowerCase();
 list.innerHTML="";
 
 patients
@@ -158,28 +172,86 @@ list.innerHTML += `
 <h3 onclick="toggle(this)">${p.name}</h3>
 
 <div class="details">
-<p>العمر: ${p.age}</p>
 
+<p>العمر: ${p.age}</p>
+<p>الطبيب: ${p.doctor}</p>
+<p>المرض: ${p.disease}</p>
+<p>المكان: ${p.place}</p>
+<p>التاريخ: ${p.date}</p>
+<p>السعر: ${p.price}</p>
+<p>المواد: ${p.materials}</p>
+
+${p.images.map(img=>`<img src="${img}">`).join("")}
+
+<hr>
+
+<button onclick="addSession(${i})">➕ جلسة</button>
+<button onclick="editPatient(${i})">✏️ تعديل</button>
 <button onclick="deletePatient(${i})">🗑 حذف</button>
+<button onclick="printPatient(${i})">🖨 طباعة</button>
+
+<div>
+${(p.sessions||[]).map(s=>`
+<div>
+📅 ${s.date} - 💰 ${s.price}
+</div>
+`).join("")}
+</div>
+
 </div>
 
 </div>
 `;
-
 });
 }
 
-// ================= TOGGLE =================
+// TOGGLE
 function toggle(el){
 let d = el.parentElement.querySelector(".details");
 d.style.display = d.style.display==="block"?"none":"block";
 }
 
-// ================= DELETE =================
+// DELETE
 function deletePatient(i){
 patients.splice(i,1);
 localStorage.setItem("patients", JSON.stringify(patients));
 display();
+}
+
+// EDIT
+function editPatient(i){
+
+let p = patients[i];
+
+p.name = prompt("الاسم", p.name);
+p.age = prompt("العمر", p.age);
+p.doctor = prompt("الطبيب", p.doctor);
+
+localStorage.setItem("patients", JSON.stringify(patients));
+display();
+}
+
+// ADD SESSION
+function addSession(i){
+
+let date = prompt("تاريخ الجلسة");
+let price = prompt("السعر");
+
+patients[i].sessions.push({date,price});
+
+localStorage.setItem("patients", JSON.stringify(patients));
+display();
+}
+
+// PRINT
+function printPatient(i){
+
+let content = document.querySelectorAll(".details")[i].innerHTML;
+
+let w = window.open("");
+w.document.write(content);
+w.print();
+
 }
 
 display();
