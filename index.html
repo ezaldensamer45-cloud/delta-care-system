@@ -1,21 +1,11 @@
-<!DOCTYPE html>
-<html lang="ar">
+<!DOCTYPE html><html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>Delta Care System</title>
-
-<style>
+<title>Delta Care System</title><style>
 body{
 font-family:Arial;
-background: url("file_00000000facc7246b6da64fac183c4f1.jpg") no-repeat center center fixed;
-background-size: cover;
-margin:0;
+background:#0f172a;
 color:white;
-}
-
-.overlay{
-background: rgba(0,0,0,0.85);
-min-height:100vh;
 padding:20px;
 }
 
@@ -24,12 +14,6 @@ padding:10px;
 margin:5px;
 border-radius:6px;
 border:none;
-}
-
-input{
-background:#0f172a;
-color:white;
-border:1px solid #334155;
 }
 
 button{
@@ -44,29 +28,8 @@ padding:10px;
 margin:10px 0;
 border-radius:8px;
 }
-
-.details{
-display:none;
-margin-top:10px;
-}
-
-img{
-width:70px;
-margin:3px;
-border-radius:5px;
-}
-</style>
-
-</head>
-<body>
-
-<div class="overlay">
-
-<h2>Delta Care System</h2>
-
-<h3>إضافة مريض</h3>
-
-<input id="name" placeholder="اسم المريض">
+</style></head>
+<body><h2>Delta Care System</h2><h3>إضافة مريض</h3><input id="name" placeholder="اسم المريض">
 <input id="age" placeholder="العمر">
 <input id="doctor" placeholder="الطبيب">
 <input id="disease" placeholder="نوع المرض">
@@ -74,34 +37,37 @@ border-radius:5px;
 <input id="date" type="date">
 <input id="price" placeholder="سعر الجلسة">
 <input id="materials" placeholder="المواد المستخدمة">
+<input id="notes" placeholder="ملاحظات"><br><button onclick="addPatient()">➕ إضافة مريض</button>
 
-<br>
+<hr><input id="search" oninput="loadPatients()" placeholder="بحث"><div id="list"></div><script type="module">
 
-<input type="file" id="images" multiple>
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-<br>
+const firebaseConfig = {
+  apiKey: "AIzaSyCh9CvocS2Ml7Pwowde8SFLwI0dbITLt5E",
+  authDomain: "delta-care-ff9e4.firebaseapp.com",
+  projectId: "delta-care-ff9e4",
+  storageBucket: "delta-care-ff9e4.firebasestorage.app",
+  messagingSenderId: "941195755372",
+  appId: "1:941195755372:web:02c1470c4362765c513d49"
+};
 
-<button onclick="addPatient()">➕ إضافة مريض</button>
-
-<hr>
-
-<input id="search" oninput="display()" placeholder="بحث">
-
-<div id="list"></div>
-
-</div>
-
-<script>
-
-let patients = JSON.parse(localStorage.getItem("patients")) || [];
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 // ADD
-function addPatient(){
+window.addPatient = async function(){
 
-try{
+let name = document.getElementById("name").value.trim();
 
-let p = {
-name: document.getElementById("name").value,
+if(name === ""){
+alert("اكتب اسم المريض");
+return;
+}
+
+let patient = {
+name: name,
 age: document.getElementById("age").value,
 doctor: document.getElementById("doctor").value,
 disease: document.getElementById("disease").value,
@@ -109,78 +75,34 @@ place: document.getElementById("place").value,
 date: document.getElementById("date").value,
 price: document.getElementById("price").value,
 materials: document.getElementById("materials").value,
-images: [],
-sessions: []
+notes: document.getElementById("notes").value
 };
 
-if(!p.name){
-alert("اكتب الاسم");
-return;
-}
+await addDoc(collection(db, "patients"), patient);
 
-let files = document.getElementById("images").files;
+alert("تم الحفظ ✅");
 
-if(files.length === 0){
-save(p);
-return;
-}
-
-let count = 0;
-
-for(let i=0;i<files.length;i++){
-
-let reader = new FileReader();
-
-reader.onload = function(e){
-p.images.push(e.target.result);
-count++;
-
-if(count === files.length){
-save(p);
-}
-};
-
-reader.readAsDataURL(files[i]);
-}
-
-}catch(err){
-alert(err.message);
-}
-
-}
-
-// SAVE
-function save(p){
-patients.push(p);
-localStorage.setItem("patients", JSON.stringify(patients));
-display();
 clearFields();
+loadPatients();
 }
 
-// CLEAR
-function clearFields(){
-document.querySelectorAll("input").forEach(i=>i.value="");
-}
-
-// DISPLAY
-function display(){
+// LOAD
+async function loadPatients(){
 
 let s = document.getElementById("search").value.toLowerCase();
 let list = document.getElementById("list");
+list.innerHTML = "";
 
-list.innerHTML="";
+let querySnapshot = await getDocs(collection(db, "patients"));
 
-patients
-.filter(p=>p.name.toLowerCase().includes(s))
-.forEach((p,i)=>{
+querySnapshot.forEach((doc) => {
+let p = doc.data();
+
+if(p.name.toLowerCase().includes(s)){
 
 list.innerHTML += `
 <div class="card">
-
-<h3 onclick="toggle(this)">${p.name}</h3>
-
-<div class="details">
-
+<h3>${p.name}</h3>
 <p>العمر: ${p.age}</p>
 <p>الطبيب: ${p.doctor}</p>
 <p>المرض: ${p.disease}</p>
@@ -188,86 +110,23 @@ list.innerHTML += `
 <p>التاريخ: ${p.date}</p>
 <p>السعر: ${p.price}</p>
 <p>المواد: ${p.materials}</p>
-
-${p.images.map(img=>`
-<img src="${img}" onclick="openImage('${img}')">
-`).join("")}
-
-<hr>
-
-<button onclick="addSession(${i})">➕ جلسة</button>
-<button onclick="editPatient(${i})">✏️ تعديل</button>
-<button onclick="deletePatient(${i})">🗑 حذف</button>
-<button onclick="printPatient(${i})">🖨 طباعة</button>
-
-<div>
-${(p.sessions||[]).map(s=>`
-<div>📅 ${s.date} - 💰 ${s.price}</div>
-`).join("")}
-</div>
-
-</div>
-
+<p>ملاحظات: ${p.notes}</p>
 </div>
 `;
+
+}
+
 });
-}
-
-// TOGGLE
-function toggle(el){
-let d = el.parentElement.querySelector(".details");
-d.style.display = d.style.display==="block"?"none":"block";
-}
-
-// DELETE
-function deletePatient(i){
-patients.splice(i,1);
-localStorage.setItem("patients", JSON.stringify(patients));
-display();
-}
-
-// EDIT
-function editPatient(i){
-
-let p = patients[i];
-
-p.name = prompt("الاسم", p.name);
-p.age = prompt("العمر", p.age);
-p.doctor = prompt("الطبيب", p.doctor);
-
-localStorage.setItem("patients", JSON.stringify(patients));
-display();
-}
-
-// SESSION
-function addSession(i){
-
-let date = prompt("تاريخ الجلسة");
-let price = prompt("السعر");
-
-patients[i].sessions.push({date,price});
-
-localStorage.setItem("patients", JSON.stringify(patients));
-display();
-}
-
-// PRINT
-function printPatient(i){
-
-let content = document.querySelectorAll(".details")[i].innerHTML;
-
-let w = window.open("");
-w.document.write(content);
-w.print();
 
 }
-function openImage(src){
-let w = window.open("");
-w.document.write(`<img src="${src}" style="width:100%">`);
+
+// CLEAR
+function clearFields(){
+document.querySelectorAll("input").forEach(i=>i.value="");
 }
-display();
 
-</script>
+// تشغيل أولي
+loadPatients();
 
-</body>
+</script></body>
 </html>
