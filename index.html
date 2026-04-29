@@ -95,28 +95,30 @@ border-radius:5px;
 
 let patients = JSON.parse(localStorage.getItem("patients")) || [];
 
-// ADD PATIENT
+// ADD
 function addPatient(){
 
+try{
+
 let p = {
-name: name.value,
-age: age.value,
-doctor: doctor.value,
-disease: disease.value,
-place: place.value,
-date: date.value,
-price: price.value,
-materials: materials.value,
+name: document.getElementById("name").value,
+age: document.getElementById("age").value,
+doctor: document.getElementById("doctor").value,
+disease: document.getElementById("disease").value,
+place: document.getElementById("place").value,
+date: document.getElementById("date").value,
+price: document.getElementById("price").value,
+materials: document.getElementById("materials").value,
 images: [],
 sessions: []
 };
 
-if(p.name.trim()==""){
+if(!p.name){
 alert("اكتب الاسم");
 return;
 }
 
-let files = images.files;
+let files = document.getElementById("images").files;
 
 if(files.length === 0){
 save(p);
@@ -125,7 +127,7 @@ return;
 
 let count = 0;
 
-for(let f of files){
+for(let i=0;i<files.length;i++){
 
 let reader = new FileReader();
 
@@ -138,7 +140,11 @@ save(p);
 }
 };
 
-reader.readAsDataURL(f);
+reader.readAsDataURL(files[i]);
+}
+
+}catch(err){
+alert(err.message);
 }
 
 }
@@ -159,7 +165,9 @@ document.querySelectorAll("input").forEach(i=>i.value="");
 // DISPLAY
 function display(){
 
-let s = search.value.toLowerCase();
+let s = document.getElementById("search").value.toLowerCase();
+let list = document.getElementById("list");
+
 list.innerHTML="";
 
 patients
@@ -192,9 +200,7 @@ ${p.images.map(img=>`<img src="${img}">`).join("")}
 
 <div>
 ${(p.sessions||[]).map(s=>`
-<div>
-📅 ${s.date} - 💰 ${s.price}
-</div>
+<div>📅 ${s.date} - 💰 ${s.price}</div>
 `).join("")}
 </div>
 
@@ -231,7 +237,7 @@ localStorage.setItem("patients", JSON.stringify(patients));
 display();
 }
 
-// ADD SESSION
+// SESSION
 function addSession(i){
 
 let date = prompt("تاريخ الجلسة");
