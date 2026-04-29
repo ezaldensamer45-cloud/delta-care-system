@@ -189,7 +189,9 @@ list.innerHTML += `
 <p>السعر: ${p.price}</p>
 <p>المواد: ${p.materials}</p>
 
-${p.images.map(img=>`<img src="${img}">`).join("")}
+${p.images.map(img=>`
+<img src="${img}" onclick="openImage('${img}')">
+`).join("")}
 
 <hr>
 
@@ -259,7 +261,10 @@ w.document.write(content);
 w.print();
 
 }
-
+function openImage(src){
+let w = window.open("");
+w.document.write(`<img src="${src}" style="width:100%">`);
+}
 display();
 
 </script>
