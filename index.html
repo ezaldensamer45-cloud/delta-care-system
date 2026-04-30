@@ -1,7 +1,10 @@
-<!DOCTYPE html><html lang="ar">
+<!DOCTYPE html>
+<html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>Delta Care System</title><style>
+<title>Delta Care System</title>
+
+<style>
 body{
 font-family:Arial;
 background:#0f172a;
@@ -28,8 +31,23 @@ padding:10px;
 margin:10px 0;
 border-radius:8px;
 }
-</style></head>
-<body><h2>Delta Care System</h2><h3>إضافة مريض</h3><input id="name" placeholder="اسم المريض">
+
+img{
+width:70px;
+margin:3px;
+border-radius:5px;
+cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Delta Care System</h2>
+
+<h3>إضافة مريض</h3>
+
+<input id="name" placeholder="اسم المريض">
 <input id="age" placeholder="العمر">
 <input id="doctor" placeholder="الطبيب">
 <input id="disease" placeholder="نوع المرض">
@@ -37,9 +55,20 @@ border-radius:8px;
 <input id="date" type="date">
 <input id="price" placeholder="سعر الجلسة">
 <input id="materials" placeholder="المواد المستخدمة">
-<input id="notes" placeholder="ملاحظات"><br><button onclick="addPatient()">➕ إضافة مريض</button>
+<input id="notes" placeholder="ملاحظات">
 
-<hr><input id="search" oninput="loadPatients()" placeholder="بحث"><div id="list"></div><script type="module">
+<br>
+<input type="file" id="images" multiple>
+<br>
+
+<button onclick="addPatient()">➕ إضافة مريض</button>
+
+<hr>
+
+<div id="list"></div>
+
+<!-- Firebase -->
+<script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -56,17 +85,49 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ADD
-window.addPatient = async function(){
+// 🔥 إضافة مريض
+window.addPatient = function(){
 
-let name = document.getElementById("name").value.trim();
+let name = document.getElementById("name").value;
 
-if(name === ""){
-alert("اكتب اسم المريض");
+if(!name){
+alert("اكتب الاسم");
 return;
 }
 
-let patient = {
+let files = document.getElementById("images").files;
+
+let images = [];
+
+if(files.length > 0){
+
+let count = 0;
+
+for(let i=0;i<files.length;i++){
+
+let reader = new FileReader();
+
+reader.onload = function(e){
+
+images.push(e.target.result);
+count++;
+
+if(count === files.length){
+save(images);
+}
+
+};
+
+reader.readAsDataURL(files[i]);
+}
+
+}else{
+save([]);
+}
+
+async function save(images){
+
+await addDoc(collection(db, "patients"), {
 name: name,
 age: document.getElementById("age").value,
 doctor: document.getElementById("doctor").value,
@@ -75,30 +136,28 @@ place: document.getElementById("place").value,
 date: document.getElementById("date").value,
 price: document.getElementById("price").value,
 materials: document.getElementById("materials").value,
-notes: document.getElementById("notes").value
-};
-
-await addDoc(collection(db, "patients"), patient);
+notes: document.getElementById("notes").value,
+images: images
+});
 
 alert("تم الحفظ ✅");
 
-clearFields();
 loadPatients();
 }
 
-// LOAD
+}
+
+// 🔥 عرض المرضى
 async function loadPatients(){
 
-let s = document.getElementById("search").value.toLowerCase();
 let list = document.getElementById("list");
 list.innerHTML = "";
 
-let querySnapshot = await getDocs(collection(db, "patients"));
+let data = await getDocs(collection(db, "patients"));
 
-querySnapshot.forEach((doc) => {
+data.forEach(doc=>{
+
 let p = doc.data();
-
-if(p.name.toLowerCase().includes(s)){
 
 list.innerHTML += `
 <div class="card">
@@ -111,22 +170,28 @@ list.innerHTML += `
 <p>السعر: ${p.price}</p>
 <p>المواد: ${p.materials}</p>
 <p>ملاحظات: ${p.notes}</p>
+
+${(p.images || []).map(img=>`
+<img src="${img}" onclick="openImage('${img}')">
+`).join("")}
+
 </div>
 `;
-
-}
 
 });
 
 }
 
-// CLEAR
-function clearFields(){
-document.querySelectorAll("input").forEach(i=>i.value="");
+// 🔥 تكبير الصورة
+window.openImage = function(src){
+let w = window.open("");
+w.document.write(`<img src="${src}" style="width:100%">`);
 }
 
 // تشغيل أولي
 loadPatients();
 
-</script></body>
+</script>
+
+</body>
 </html>
