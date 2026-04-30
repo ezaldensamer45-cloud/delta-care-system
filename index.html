@@ -5,21 +5,54 @@
 <title>Delta Care Pro</title>
 
 <style>
-body{font-family:Arial;background:#0f172a;color:white;padding:20px}
-input,button{padding:10px;margin:5px;border-radius:6px;border:none}
-button{background:#22c55e;color:white;cursor:pointer}
-.card{background:#1e293b;padding:10px;margin:10px 0;border-radius:8px}
-.details{display:none;margin-top:10px}
-img{width:70px;margin:3px;border-radius:5px;cursor:pointer}
+body{
+font-family:Arial;
+background: url("file_00000000facc7246b6da64fac183c4f1.jpg") no-repeat center center fixed;
+background-size: cover;
+color:white;
+padding:20px;
+}
 
-.title{
-display:flex;
-justify-content:space-between;
+input,button{
+padding:10px;
+margin:5px;
+border-radius:6px;
+border:none;
+}
+
+button{
+background:black;
+color:white;
+font-weight:bold;
 cursor:pointer;
 }
 
-.arrow{
-font-size:18px;
+.card{
+background:#1e293b;
+padding:10px;
+margin:10px 0;
+border-radius:8px;
+}
+
+.details{
+display:none;
+margin-top:10px;
+}
+
+img{
+width:70px;
+margin:3px;
+border-radius:5px;
+cursor:pointer;
+}
+
+h3{
+font-size:22px;
+}
+
+.title span{
+font-size:20px;
+font-weight:bold;
 }
 </style>
 
@@ -117,26 +150,36 @@ alert("تم التغيير");
 // ➕ ADD
 window.addPatient = function(){
 
-let files = images.files;
-let imgs=[];
+let name = document.getElementById("name").value;
 
-if(files.length>0){
-let count=0;
+if(!name){
+alert("اكتب اسم المريض");
+return;
+}
+
+let files = document.getElementById("images").files;
+let imgs = [];
+
+if(files.length > 0){
+
+let count = 0;
 
 for(let f of files){
-let reader=new FileReader();
 
-reader.onload=function(e){
+let reader = new FileReader();
+
+reader.onload = function(e){
 imgs.push(e.target.result);
 count++;
 
-if(count===files.length){
+if(count === files.length){
 save(imgs);
 }
 };
 
 reader.readAsDataURL(f);
 }
+
 }else{
 save([]);
 }
@@ -144,20 +187,20 @@ save([]);
 async function save(imgs){
 
 await addDoc(collection(db,"patients"),{
-name:name.value,
-age:age.value,
-doctor:doctor.value,
-disease:disease.value,
-place:place.value,
-date:date.value,
-price:price.value,
-materials:materials.value,
-notes:notes.value,
-images:imgs,
+name: name,
+age: age.value,
+doctor: doctor.value,
+disease: disease.value,
+place: place.value,
+date: date.value,
+price: price.value,
+materials: materials.value,
+notes: notes.value,
+images: imgs,
 sessions:[]
 });
 
-alert("تمت الإضافة");
+alert("تمت الإضافة ✅");
 loadPatients();
 }
 
