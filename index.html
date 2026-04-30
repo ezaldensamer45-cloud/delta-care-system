@@ -116,18 +116,24 @@ localStorage.setItem("role","doctor");
 
 // حفظ تسجيل الدخول
 if(localStorage.getItem("logged")==="yes"){
-loginBox.style.display="none";
-app.style.display="block";
+document.getElementById("loginBox").style.display="none";
+document.getElementById("app").style.display="block";
 loadPatients();
 }
-
 window.login = function(){
 
-if(user.value===localStorage.getItem("user") && pass.value===localStorage.getItem("pass")){
+let u = document.getElementById("user").value;
+let p = document.getElementById("pass").value;
+
+if(u === localStorage.getItem("user") && p === localStorage.getItem("pass")){
+
+document.getElementById("loginBox").style.display="none";
+document.getElementById("app").style.display="block";
+
 localStorage.setItem("logged","yes");
-loginBox.style.display="none";
-app.style.display="block";
+
 loadPatients();
+
 }else{
 alert("خطأ");
 }
