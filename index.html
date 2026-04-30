@@ -2,13 +2,12 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>Delta Care Pro</title>
+<title>Delta Care System</title>
 
 <style>
 body{
 font-family:Arial;
-background: url("file_00000000facc7246b6da64fac183c4f1.jpg") no-repeat center center fixed;
-background-size:cover;
+background:#0f172a;
 color:white;
 padding:20px;
 }
@@ -21,9 +20,8 @@ border:none;
 }
 
 button{
-background:black;
+background:#22c55e;
 color:white;
-font-weight:bold;
 cursor:pointer;
 }
 
@@ -34,18 +32,10 @@ margin:10px 0;
 border-radius:8px;
 }
 
-.details{display:none;margin-top:10px}
-
 img{
 width:70px;
 margin:3px;
 border-radius:5px;
-cursor:pointer;
-}
-
-.title{
-display:flex;
-justify-content:space-between;
 cursor:pointer;
 }
 </style>
@@ -53,299 +43,153 @@ cursor:pointer;
 
 <body>
 
-<h2>Delta Care Pro</h2>
-
-<!-- LOGIN -->
-<div id="loginBox">
-<input id="user" placeholder="user">
-<input id="pass" type="password" placeholder="pass">
-<button onclick="login()">دخول</button>
-</div>
-
-<button onclick="changeUser()">⚙ تغيير البيانات</button>
-
-<hr>
-
-<div id="app" style="display:none">
-
-<input id="search" oninput="loadPatients()" placeholder="بحث">
+<h2>Delta Care System</h2>
 
 <h3>إضافة مريض</h3>
 
-<input id="name" placeholder="اسم">
-<input id="age" placeholder="عمر">
-<input id="doctor" placeholder="طبيب">
-<input id="disease" placeholder="مرض">
-<input id="place" placeholder="مكان">
+<input id="name" placeholder="اسم المريض">
+<input id="age" placeholder="العمر">
+<input id="doctor" placeholder="الطبيب">
+<input id="disease" placeholder="نوع المرض">
+<input id="place" placeholder="مكان المرض">
 <input id="date" type="date">
-<input id="price" placeholder="سعر">
-<input id="materials" placeholder="مواد">
+<input id="price" placeholder="سعر الجلسة">
+<input id="materials" placeholder="المواد المستخدمة">
 <input id="notes" placeholder="ملاحظات">
 
 <br>
 <input type="file" id="images" multiple>
 <br>
 
-<button onclick="addPatient()">➕ إضافة</button>
+<button onclick="addPatient()">➕ إضافة مريض</button>
 
 <hr>
 
 <div id="list"></div>
 
-</div>
-
+<!-- Firebase -->
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const app = initializeApp({
-apiKey:"AIzaSy...",
-authDomain:"delta-care-ff9e4.firebaseapp.com",
-projectId:"delta-care-ff9e4"
-});
-
-const db = getFirestore(app);
-
-// 🔐 USERS
-if(!localStorage.getItem("user")){
-localStorage.setItem("user","admin");
-localStorage.setItem("pass","1234");
-localStorage.setItem("role","doctor");
-}
-
-// حفظ تسجيل الدخول
-if(localStorage.getItem("logged")==="yes"){
-loginBox.style.display="none";
-app.style.display="block";
-loadPatients();
-}
-
-window.login = function(){
-
-if(user.value===localStorage.getItem("user") && pass.value===localStorage.getItem("pass")){
-localStorage.setItem("logged","yes");
-loginBox.style.display="none";
-app.style.display="block";
-loadPatients();
-}else{
-alert("خطأ");
-}
-}
-
-window.changeUser = function(){
-let u=prompt("user");
-let p=prompt("pass");
-let r=prompt("role (doctor / secretary)");
-
-if(u&&p){
-localStorage.setItem("user",u);
-localStorage.setItem("pass",p);
-localStorage.setItem("role",r||"doctor");
-}
-}
-
-// ➕ ADD
-window.addPatient = function(){
-
-let files=images.files;
-let imgs=[];
-
-if(files.length>0){
-let c=0;
-
-for(let f of files){
-let r=new FileReader();
-
-r.onload=e=>{
-imgs.push(e.target.result);
-c++;
-
-if(c===files.length) save(imgs);
+const firebaseConfig = {
+  apiKey: "AIzaSyCh9CvocS2Ml7Pwowde8SFLwI0dbITLt5E",
+  authDomain: "delta-care-ff9e4.firebaseapp.com",
+  projectId: "delta-care-ff9e4",
+  storageBucket: "delta-care-ff9e4.firebasestorage.app",
+  messagingSenderId: "941195755372",
+  appId: "1:941195755372:web:02c1470c4362765c513d49"
 };
 
-r.readAsDataURL(f);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// 🔥 إضافة مريض
+window.addPatient = function(){
+
+let name = document.getElementById("name").value;
+
+if(!name){
+alert("اكتب الاسم");
+return;
 }
+
+let files = document.getElementById("images").files;
+
+let images = [];
+
+if(files.length > 0){
+
+let count = 0;
+
+for(let i=0;i<files.length;i++){
+
+let reader = new FileReader();
+
+reader.onload = function(e){
+
+images.push(e.target.result);
+count++;
+
+if(count === files.length){
+save(images);
+}
+
+};
+
+reader.readAsDataURL(files[i]);
+}
+
 }else{
 save([]);
 }
 
-async function save(imgs){
+async function save(images){
 
-await addDoc(collection(db,"patients"),{
-name:name.value,
-age:age.value,
-doctor:doctor.value,
-disease:disease.value,
-place:place.value,
-date:date.value,
-price:price.value,
-materials:materials.value,
-notes:notes.value,
-images:imgs,
-sessions:[]
+await addDoc(collection(db, "patients"), {
+name: name,
+age: document.getElementById("age").value,
+doctor: document.getElementById("doctor").value,
+disease: document.getElementById("disease").value,
+place: document.getElementById("place").value,
+date: document.getElementById("date").value,
+price: document.getElementById("price").value,
+materials: document.getElementById("materials").value,
+notes: document.getElementById("notes").value,
+images: images
 });
+
+alert("تم الحفظ ✅");
 
 loadPatients();
 }
+
 }
 
-// 📥 LOAD
+// 🔥 عرض المرضى
 async function loadPatients(){
 
-list.innerHTML="";
-let s=search.value.toLowerCase();
+let list = document.getElementById("list");
+list.innerHTML = "";
 
-let data=await getDocs(collection(db,"patients"));
+let data = await getDocs(collection(db, "patients"));
 
-data.forEach(d=>{
+data.forEach(doc=>{
 
-let p=d.data();
-let id=d.id;
+let p = doc.data();
 
-if(!p.name.toLowerCase().includes(s)) return;
-
-list.innerHTML+=`
+list.innerHTML += `
 <div class="card">
+<h3>${p.name}</h3>
+<p>العمر: ${p.age}</p>
+<p>الطبيب: ${p.doctor}</p>
+<p>المرض: ${p.disease}</p>
+<p>المكان: ${p.place}</p>
+<p>التاريخ: ${p.date}</p>
+<p>السعر: ${p.price}</p>
+<p>المواد: ${p.materials}</p>
+<p>ملاحظات: ${p.notes}</p>
 
-<div class="title" onclick="toggle('${id}')">
-<span>${p.name}</span>
-<span id="a${id}">⬇</span>
-</div>
-
-<div class="details" id="${id}">
-
-<p>${p.age}</p>
-<p>${p.doctor}</p>
-
-${(p.images||[]).map((img,i)=>`
-<div>
+${(p.images || []).map(img=>`
 <img src="${img}" onclick="openImage('${img}')">
-<button onclick="deleteImage('${id}',${i})">❌</button>
-</div>
 `).join("")}
 
-<br>
-
-<button onclick="editPatient('${id}')">✏ تعديل</button>
-<button onclick="deletePatient('${id}')">🗑 حذف</button>
-<button onclick="addSession('${id}')">➕ جلسة</button>
-
-<div>
-${(p.sessions||[]).map(s=>`
-<div>
-📅 ${s.date} - 💰 ${s.price}
-${(s.images||[]).map(i=>`<img src="${i}">`).join("")}
-</div>
-`).join("")}
-</div>
-
-</div>
 </div>
 `;
+
 });
+
 }
 
-// 🔄 TOGGLE
-window.toggle=id=>{
-let el=document.getElementById(id);
-let a=document.getElementById("a"+id);
-
-if(el.style.display==="block"){
-el.style.display="none";
-a.innerText="⬇";
-}else{
-el.style.display="block";
-a.innerText="⬆";
-}
-}
-
-// 🗑 DELETE PATIENT
-window.deletePatient=async id=>{
-await deleteDoc(doc(db,"patients",id));
-loadPatients();
-}
-
-// ❌ DELETE IMAGE
-window.deleteImage=async(id,index)=>{
-
-let data=await getDocs(collection(db,"patients"));
-let p;
-
-data.forEach(d=>{if(d.id===id)p=d.data()});
-
-p.images.splice(index,1);
-
-await updateDoc(doc(db,"patients",id),{images:p.images});
-loadPatients();
-}
-
-// ✏ EDIT FULL
-window.editPatient=async id=>{
-
-let name=prompt("اسم");
-let age=prompt("عمر");
-let doctor=prompt("طبيب");
-
-await updateDoc(doc(db,"patients",id),{name,age,doctor});
-loadPatients();
-}
-
-// ➕ SESSION + صور
-window.addSession=async id=>{
-
-let date=prompt("تاريخ");
-let price=prompt("سعر");
-
-let input=document.createElement("input");
-input.type="file";
-input.multiple=true;
-
-input.onchange=async ()=>{
-
-let files=input.files;
-let imgs=[];
-let c=0;
-
-for(let f of files){
-let r=new FileReader();
-
-r.onload=e=>{
-imgs.push(e.target.result);
-c++;
-
-if(c===files.length){
-save(imgs);
-}
-};
-
-r.readAsDataURL(f);
-}
-
-async function save(imgs){
-
-let data=await getDocs(collection(db,"patients"));
-let p;
-
-data.forEach(d=>{if(d.id===id)p=d.data()});
-
-let sessions=p.sessions||[];
-sessions.push({date,price,images:imgs});
-
-await updateDoc(doc(db,"patients",id),{sessions});
-loadPatients();
-}
-
-};
-
-input.click();
-}
-
-// 🔍 IMAGE
-window.openImage=src=>{
-let w=window.open("");
+// 🔥 تكبير الصورة
+window.openImage = function(src){
+let w = window.open("");
 w.document.write(`<img src="${src}" style="width:100%">`);
 }
+
+// تشغيل أولي
+loadPatients();
 
 </script>
 
