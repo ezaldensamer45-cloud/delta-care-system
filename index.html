@@ -154,23 +154,40 @@ localStorage.setItem("role",r||"doctor");
 // ➕ ADD
 window.addPatient = function(){
 
-let files=images.files;
-let imgs=[];
+let name = document.getElementById("name").value;
+let age = document.getElementById("age").value;
+let doctor = document.getElementById("doctor").value;
+let disease = document.getElementById("disease").value;
+let place = document.getElementById("place").value;
+let date = document.getElementById("date").value;
+let price = document.getElementById("price").value;
+let materials = document.getElementById("materials").value;
+let notes = document.getElementById("notes").value;
 
-if(files.length>0){
-let c=0;
+if(!name){
+alert("اكتب اسم المريض");
+return;
+}
+
+let files = document.getElementById("images").files;
+let imgs = [];
+
+if(files.length > 0){
+let count = 0;
 
 for(let f of files){
-let r=new FileReader();
+let reader = new FileReader();
 
-r.onload=e=>{
+reader.onload = function(e){
 imgs.push(e.target.result);
-c++;
+count++;
 
-if(c===files.length) save(imgs);
+if(count === files.length){
+save(imgs);
+}
 };
 
-r.readAsDataURL(f);
+reader.readAsDataURL(f);
 }
 }else{
 save([]);
@@ -179,21 +196,15 @@ save([]);
 async function save(imgs){
 
 await addDoc(collection(db,"patients"),{
-name:name.value,
-age:age.value,
-doctor:doctor.value,
-disease:disease.value,
-place:place.value,
-date:date.value,
-price:price.value,
-materials:materials.value,
-notes:notes.value,
-images:imgs,
-sessions:[]
+name,age,doctor,disease,place,date,price,materials,notes,
+images: imgs,
+sessions: []
 });
 
+alert("تمت الإضافة");
 loadPatients();
 }
+
 }
 
 // 📥 LOAD
@@ -298,45 +309,56 @@ loadPatients();
 }
 
 // ➕ SESSION + صور
-window.addSession=async id=>{
+window.addSession = async function(id){
 
-let date=prompt("تاريخ");
-let price=prompt("سعر");
+let date = prompt("تاريخ الجلسة");
+let price = prompt("السعر");
 
-let input=document.createElement("input");
-input.type="file";
-input.multiple=true;
+if(!date || !price) return;
 
-input.onchange=async ()=>{
+let input = document.createElement("input");
+input.type = "file";
+input.multiple = true;
 
-let files=input.files;
-let imgs=[];
-let c=0;
+input.onchange = async () => {
+
+let files = input.files;
+let imgs = [];
+
+if(files.length > 0){
+let count = 0;
 
 for(let f of files){
-let r=new FileReader();
+let reader = new FileReader();
 
-r.onload=e=>{
+reader.onload = function(e){
 imgs.push(e.target.result);
-c++;
+count++;
 
-if(c===files.length){
+if(count === files.length){
 save(imgs);
 }
 };
 
-r.readAsDataURL(f);
+reader.readAsDataURL(f);
+}
+}else{
+save([]);
 }
 
 async function save(imgs){
 
-let data=await getDocs(collection(db,"patients"));
-let p;
+let snapshot = await getDocs(collection(db,"patients"));
+let patientData;
 
-data.forEach(d=>{if(d.id===id)p=d.data()});
+snapshot.forEach(docu=>{
+if(docu.id === id){
+patientData = docu.data();
+}
+});
 
-let sessions=p.sessions||[];
-sessions.push({date,price,images:imgs});
+let sessions = patientData.sessions || [];
+sessions.push({date, price, images: imgs});
 
 await updateDoc(doc(db,"patients",id),{sessions});
 loadPatients();
@@ -346,7 +368,6 @@ loadPatients();
 
 input.click();
 }
-
 // 🔍 IMAGE
 window.openImage=src=>{
 let w=window.open("");
