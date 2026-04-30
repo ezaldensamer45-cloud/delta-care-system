@@ -32,15 +32,12 @@ margin:10px 0;
 border-radius:8px;
 }
 
-.details{
-display:none;
-}
+.details{display:none;}
 
 .title{
 cursor:pointer;
 display:flex;
 justify-content:space-between;
-font-size:18px;
 }
 
 img{
@@ -64,6 +61,8 @@ cursor:pointer;
 </div>
 
 <div id="app" style="display:none">
+
+<button onclick="changeLogin()">⚙️ تغيير اليوزر والباس</button>
 
 <input id="search" oninput="loadPatients()" placeholder="بحث">
 
@@ -105,7 +104,7 @@ projectId:"delta-care-ff9e4"
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 🔐 أول مرة
+// أول مرة
 if(!localStorage.getItem("user")){
 localStorage.setItem("user","admin");
 localStorage.setItem("pass","1234");
@@ -114,18 +113,26 @@ localStorage.setItem("pass","1234");
 // تسجيل دخول
 window.login = function(){
 
-let u = user.value;
-let p = pass.value;
-
-if(u === localStorage.getItem("user") && p === localStorage.getItem("pass")){
+if(user.value === localStorage.getItem("user") && pass.value === localStorage.getItem("pass")){
 localStorage.setItem("logged","yes");
-
 loginBox.style.display="none";
 document.getElementById("app").style.display="block";
-
 loadPatients();
 }else{
 alert("خطأ");
+}
+}
+
+// تغيير اليوزر والباس
+window.changeLogin = function(){
+
+let u = prompt("يوزر جديد");
+let p = prompt("باس جديد");
+
+if(u && p){
+localStorage.setItem("user",u);
+localStorage.setItem("pass",p);
+alert("تم التغيير");
 }
 }
 
@@ -203,12 +210,9 @@ list.innerHTML += `
 <p>العمر: ${p.age}</p>
 <p>الطبيب: ${p.doctor}</p>
 <p>المرض: ${p.disease}</p>
-<p>المكان: ${p.place}</p>
-<p>التاريخ: ${p.date}</p>
-<p>السعر: ${p.price}</p>
 
 ${(p.images||[]).map(img=>`
-<img src="${img}" onclick="openImage('${img}')">
+<img src="${img}">
 `).join("")}
 
 <br>
@@ -216,6 +220,7 @@ ${(p.images||[]).map(img=>`
 <button onclick="deletePatient('${id}')">🗑 حذف</button>
 <button onclick="editPatient('${id}')">✏ تعديل</button>
 <button onclick="addSession('${id}')">➕ جلسة</button>
+<button onclick="printPatient('${id}')">🖨 طباعة</button>
 
 <div>
 ${(p.sessions||[]).map(s=>`
@@ -232,17 +237,11 @@ ${(p.sessions||[]).map(s=>`
 
 // فتح وغلق
 window.toggle = function(id){
+let d=document.getElementById(id);
+let a=document.getElementById("a"+id);
 
-let d = document.getElementById(id);
-let arrow = document.getElementById("a"+id);
-
-if(d.style.display==="block"){
-d.style.display="none";
-arrow.innerText="⬇";
-}else{
-d.style.display="block";
-arrow.innerText="⬆";
-}
+d.style.display=d.style.display==="block"?"none":"block";
+a.innerText=d.style.display==="block"?"⬆":"⬇";
 }
 
 // حذف
@@ -276,10 +275,21 @@ await updateDoc(doc(db,"patients",id),{sessions});
 loadPatients();
 }
 
-// صورة
-window.openImage = function(src){
+// طباعة
+window.printPatient = function(id){
+
+let cards = document.querySelectorAll(".card");
+let content = "";
+
+cards.forEach(c=>{
+if(c.innerHTML.includes(id)){
+content = c.innerHTML;
+}
+});
+
 let w = window.open("");
-w.document.write(`<img src="${src}" style="width:100%">`);
+w.document.write(content);
+w.print();
 }
 
 </script>
