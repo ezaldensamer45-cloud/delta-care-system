@@ -106,10 +106,19 @@ localStorage.setItem("pass","1234");
 }
 
 window.login = function(){
-if(user.value===localStorage.getItem("user") && pass.value===localStorage.getItem("pass")){
-loginBox.style.display="none";
-app.style.display="block";
+
+let u = document.getElementById("user").value;
+let p = document.getElementById("pass").value;
+
+if(u === localStorage.getItem("user") && p === localStorage.getItem("pass")){
+
+if(localStorage.getItem("logged")==="yes"){
+document.getElementById("loginBox").style.display="none";
+document.getElementById("app").style.display="block";
 loadPatients();
+}
+loadPatients();
+
 }else{
 alert("خطأ");
 }
