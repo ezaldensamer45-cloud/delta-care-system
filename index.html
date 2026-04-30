@@ -7,8 +7,7 @@
 <style>
 body{
 font-family:Arial;
-background: url("file_00000000facc7246b6da64fac183c4f1.jpg") no-repeat center center fixed;
-background-size:cover;
+background:#0f172a;
 color:white;
 padding:20px;
 }
@@ -23,8 +22,8 @@ border:none;
 button{
 background:black;
 color:white;
-font-weight:bold;
 cursor:pointer;
+font-weight:bold;
 }
 
 .card{
@@ -34,7 +33,7 @@ margin:10px 0;
 border-radius:8px;
 }
 
-.details{display:none;margin-top:10px}
+.details{display:none}
 
 img{
 width:70px;
@@ -47,13 +46,14 @@ cursor:pointer;
 display:flex;
 justify-content:space-between;
 cursor:pointer;
+font-size:18px;
 }
 </style>
 </head>
 
 <body>
 
-<h2>Delta Care Pro</h2>
+<h2>Delta Care</h2>
 
 <!-- LOGIN -->
 <div id="loginBox">
@@ -61,8 +61,6 @@ cursor:pointer;
 <input id="pass" type="password" placeholder="pass">
 <button onclick="login()">دخول</button>
 </div>
-
-<button onclick="changeUser()">⚙ تغيير البيانات</button>
 
 <hr>
 
@@ -100,129 +98,97 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
-apiKey:"AIzaSy...",
+apiKey:"AIzaSyCh9CvocS2Ml7Pwowde8SFLwI0dbITLt5E",
 authDomain:"delta-care-ff9e4.firebaseapp.com",
 projectId:"delta-care-ff9e4"
 });
 
 const db = getFirestore(app);
 
-// 🔐 USERS
+// 👇 تسجيل دخول افتراضي
 if(!localStorage.getItem("user")){
 localStorage.setItem("user","admin");
 localStorage.setItem("pass","1234");
-localStorage.setItem("role","doctor");
 }
 
-// حفظ تسجيل الدخول
+// حفظ الدخول
 if(localStorage.getItem("logged")==="yes"){
 document.getElementById("loginBox").style.display="none";
 document.getElementById("app").style.display="block";
 loadPatients();
 }
+
 window.login = function(){
 
 let u = document.getElementById("user").value;
 let p = document.getElementById("pass").value;
 
 if(u === localStorage.getItem("user") && p === localStorage.getItem("pass")){
-
+localStorage.setItem("logged","yes");
 document.getElementById("loginBox").style.display="none";
 document.getElementById("app").style.display="block";
-
-localStorage.setItem("logged","yes");
-
 loadPatients();
-
 }else{
 alert("خطأ");
 }
 }
 
-window.changeUser = function(){
-let u=prompt("user");
-let p=prompt("pass");
-let r=prompt("role (doctor / secretary)");
-
-if(u&&p){
-localStorage.setItem("user",u);
-localStorage.setItem("pass",p);
-localStorage.setItem("role",r||"doctor");
-}
+// تحويل صورة
+function toBase64(file){
+return new Promise((resolve)=>{
+let reader = new FileReader();
+reader.onload = ()=> resolve(reader.result);
+reader.readAsDataURL(file);
+});
 }
 
-// ➕ ADD
-window.addPatient = function(){
+// ➕ إضافة
+window.addPatient = async function(){
 
 let name = document.getElementById("name").value;
-let age = document.getElementById("age").value;
-let doctor = document.getElementById("doctor").value;
-let disease = document.getElementById("disease").value;
-let place = document.getElementById("place").value;
-let date = document.getElementById("date").value;
-let price = document.getElementById("price").value;
-let materials = document.getElementById("materials").value;
-let notes = document.getElementById("notes").value;
+if(!name){alert("اكتب الاسم");return;}
 
-if(!name){
-alert("اكتب اسم المريض");
-return;
-}
-
-let files = document.getElementById("images").files;
 let imgs = [];
-
-if(files.length > 0){
-let count = 0;
+let files = document.getElementById("images").files;
 
 for(let f of files){
-let reader = new FileReader();
-
-reader.onload = function(e){
-imgs.push(e.target.result);
-count++;
-
-if(count === files.length){
-save(imgs);
+let b = await toBase64(f);
+imgs.push(b);
 }
-};
-
-reader.readAsDataURL(f);
-}
-}else{
-save([]);
-}
-
-async function save(imgs){
 
 await addDoc(collection(db,"patients"),{
-name,age,doctor,disease,place,date,price,materials,notes,
+name,
+age: age.value,
+doctor: doctor.value,
+disease: disease.value,
+place: place.value,
+date: date.value,
+price: price.value,
+materials: materials.value,
+notes: notes.value,
 images: imgs,
-sessions: []
+sessions:[]
 });
 
-alert("تمت الإضافة");
 loadPatients();
 }
 
-}
-
-// 📥 LOAD
+// 📥 عرض
 async function loadPatients(){
 
 list.innerHTML="";
-let s=search.value.toLowerCase();
+let s = search.value.toLowerCase();
 
-let data=await getDocs(collection(db,"patients"));
+let data = await getDocs(collection(db,"patients"));
 
 data.forEach(d=>{
 
-let p=d.data();
-let id=d.id;
+let p = d.data();
+let id = d.id;
 
 if(!p.name.toLowerCase().includes(s)) return;
 
-list.innerHTML+=`
+list.innerHTML += `
 <div class="card">
 
 <div class="title" onclick="toggle('${id}')">
@@ -232,28 +198,22 @@ list.innerHTML+=`
 
 <div class="details" id="${id}">
 
-<p>${p.age}</p>
-<p>${p.doctor}</p>
+<p>العمر: ${p.age}</p>
+<p>الطبيب: ${p.doctor}</p>
 
-${(p.images||[]).map((img,i)=>`
-<div>
+${(p.images||[]).map(img=>`
 <img src="${img}" onclick="openImage('${img}')">
-<button onclick="deleteImage('${id}',${i})">❌</button>
-</div>
 `).join("")}
 
 <br>
 
-<button onclick="editPatient('${id}')">✏ تعديل</button>
 <button onclick="deletePatient('${id}')">🗑 حذف</button>
+<button onclick="editPatient('${id}')">✏ تعديل</button>
 <button onclick="addSession('${id}')">➕ جلسة</button>
 
 <div>
 ${(p.sessions||[]).map(s=>`
-<div>
-📅 ${s.date} - 💰 ${s.price}
-${(s.images||[]).map(i=>`<img src="${i}">`).join("")}
-</div>
+<div>📅 ${s.date} - 💰 ${s.price}</div>
 `).join("")}
 </div>
 
@@ -263,8 +223,8 @@ ${(s.images||[]).map(i=>`<img src="${i}">`).join("")}
 });
 }
 
-// 🔄 TOGGLE
-window.toggle=id=>{
+// 🔽 فتح/غلق
+window.toggle = function(id){
 let el=document.getElementById(id);
 let a=document.getElementById("a"+id);
 
@@ -277,100 +237,44 @@ a.innerText="⬆";
 }
 }
 
-// 🗑 DELETE PATIENT
-window.deletePatient=async id=>{
+// 🗑 حذف
+window.deletePatient = async function(id){
 await deleteDoc(doc(db,"patients",id));
 loadPatients();
 }
 
-// ❌ DELETE IMAGE
-window.deleteImage=async(id,index)=>{
-
-let data=await getDocs(collection(db,"patients"));
-let p;
-
-data.forEach(d=>{if(d.id===id)p=d.data()});
-
-p.images.splice(index,1);
-
-await updateDoc(doc(db,"patients",id),{images:p.images});
+// ✏ تعديل
+window.editPatient = async function(id){
+let name = prompt("اسم جديد");
+await updateDoc(doc(db,"patients",id),{name});
 loadPatients();
 }
 
-// ✏ EDIT FULL
-window.editPatient=async id=>{
-
-let name=prompt("اسم");
-let age=prompt("عمر");
-let doctor=prompt("طبيب");
-
-await updateDoc(doc(db,"patients",id),{name,age,doctor});
-loadPatients();
-}
-
-// ➕ SESSION + صور
+// ➕ جلسة
 window.addSession = async function(id){
 
-let date = prompt("تاريخ الجلسة");
-let price = prompt("السعر");
+let date = prompt("تاريخ");
+let price = prompt("سعر");
 
-if(!date || !price) return;
-
-let input = document.createElement("input");
-input.type = "file";
-input.multiple = true;
-
-input.onchange = async () => {
-
-let files = input.files;
-let imgs = [];
-
-if(files.length > 0){
-let count = 0;
-
-for(let f of files){
-let reader = new FileReader();
-
-reader.onload = function(e){
-imgs.push(e.target.result);
-count++;
-
-if(count === files.length){
-save(imgs);
-}
-};
-
-reader.readAsDataURL(f);
-}
-}else{
-save([]);
-}
-
-async function save(imgs){
+if(!date) return;
 
 let snapshot = await getDocs(collection(db,"patients"));
-let patientData;
+let p;
 
-snapshot.forEach(docu=>{
-if(docu.id === id){
-patientData = docu.data();
-}
+snapshot.forEach(d=>{
+if(d.id === id) p = d.data();
 });
 
-let sessions = patientData.sessions || [];
-sessions.push({date, price, images: imgs});
+let sessions = p.sessions || [];
+sessions.push({date,price});
 
 await updateDoc(doc(db,"patients",id),{sessions});
 loadPatients();
 }
 
-};
-
-input.click();
-}
-// 🔍 IMAGE
-window.openImage=src=>{
-let w=window.open("");
+// 🔍 صورة
+window.openImage = function(src){
+let w = window.open("");
 w.document.write(`<img src="${src}" style="width:100%">`);
 }
 
