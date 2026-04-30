@@ -67,84 +67,58 @@ cursor:pointer;
 
 <div id="list"></div>
 
-<!-- Firebase -->
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCh9CvocS2Ml7Pwowde8SFLwI0dbITLt5E",
-  authDomain: "delta-care-ff9e4.firebaseapp.com",
-  projectId: "delta-care-ff9e4",
-  storageBucket: "delta-care-ff9e4.firebasestorage.app",
-  messagingSenderId: "941195755372",
-  appId: "1:941195755372:web:02c1470c4362765c513d49"
+apiKey: "AIzaSyCh9CvocS2Ml7Pwowde8SFLwI0dbITLt5E",
+authDomain: "delta-care-ff9e4.firebaseapp.com",
+projectId: "delta-care-ff9e4"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// 🔥 تحويل الصور
+function toBase64(file){
+return new Promise(resolve=>{
+let reader = new FileReader();
+reader.onload = ()=>resolve(reader.result);
+reader.readAsDataURL(file);
+});
+}
+
 // 🔥 إضافة مريض
-window.addPatient = function(){
+window.addPatient = async function(){
 
 let name = document.getElementById("name").value;
+if(!name){ alert("اكتب الاسم"); return; }
 
-if(!name){
-alert("اكتب الاسم");
-return;
+let imgs = [];
+
+for(let f of document.getElementById("images").files){
+let b = await toBase64(f);
+imgs.push(b);
 }
 
-let files = document.getElementById("images").files;
-
-let images = [];
-
-if(files.length > 0){
-
-let count = 0;
-
-for(let i=0;i<files.length;i++){
-
-let reader = new FileReader();
-
-reader.onload = function(e){
-
-images.push(e.target.result);
-count++;
-
-if(count === files.length){
-save(images);
-}
-
-};
-
-reader.readAsDataURL(files[i]);
-}
-
-}else{
-save([]);
-}
-
-async function save(images){
-
-await addDoc(collection(db, "patients"), {
-name: name,
-age: document.getElementById("age").value,
-doctor: document.getElementById("doctor").value,
-disease: document.getElementById("disease").value,
-place: document.getElementById("place").value,
-date: document.getElementById("date").value,
-price: document.getElementById("price").value,
-materials: document.getElementById("materials").value,
-notes: document.getElementById("notes").value,
-images: images
+await addDoc(collection(db,"patients"),{
+name,
+age: age.value,
+doctor: doctor.value,
+disease: disease.value,
+place: place.value,
+date: date.value,
+price: price.value,
+materials: materials.value,
+notes: notes.value,
+images: imgs,
+sessions: []
 });
 
 alert("تم الحفظ ✅");
-
 loadPatients();
-}
-
 }
 
 // 🔥 عرض المرضى
@@ -155,13 +129,16 @@ list.innerHTML = "";
 
 let data = await getDocs(collection(db, "patients"));
 
-data.forEach(doc=>{
+data.forEach(d=>{
 
-let p = doc.data();
+let p = d.data();
+let id = d.id;
 
 list.innerHTML += `
 <div class="card">
+
 <h3>${p.name}</h3>
+
 <p>العمر: ${p.age}</p>
 <p>الطبيب: ${p.doctor}</p>
 <p>المرض: ${p.disease}</p>
@@ -175,11 +152,80 @@ ${(p.images || []).map(img=>`
 <img src="${img}" onclick="openImage('${img}')">
 `).join("")}
 
+<br>
+
+<button onclick="editPatient('${id}')">✏ تعديل</button>
+<button onclick="deletePatient('${id}')">🗑 حذف</button>
+<button onclick="addSession('${id}')">➕ جلسة</button>
+<button onclick="printPatient('${id}')">🖨 طباعة</button>
+
+<div>
+${(p.sessions || []).map(s=>`
+<div>📅 ${s.date} - 💰 ${s.price}</div>
+`).join("")}
+</div>
+
 </div>
 `;
+});
+}
 
+// 🔥 حذف
+window.deletePatient = async function(id){
+await deleteDoc(doc(db,"patients",id));
+loadPatients();
+}
+
+// 🔥 تعديل
+window.editPatient = async function(id){
+
+let name = prompt("اسم");
+let age = prompt("عمر");
+let doctor = prompt("طبيب");
+let disease = prompt("مرض");
+
+await updateDoc(doc(db,"patients",id),{
+name,age,doctor,disease
 });
 
+loadPatients();
+}
+
+// 🔥 جلسات
+window.addSession = async function(id){
+
+let date = prompt("تاريخ الجلسة");
+let price = prompt("السعر");
+
+let sessions = [];
+
+let data = await getDocs(collection(db,"patients"));
+let p;
+
+data.forEach(d=>{ if(d.id===id) p=d.data(); });
+
+sessions = p.sessions || [];
+
+sessions.push({date,price});
+
+await updateDoc(doc(db,"patients",id),{sessions});
+
+loadPatients();
+}
+
+// 🔥 طباعة
+window.printPatient = function(id){
+
+let card = document.querySelectorAll(".card");
+let content;
+
+card.forEach(c=>{
+if(c.innerHTML.includes(id)) content=c.innerHTML;
+});
+
+let w = window.open("");
+w.document.write(content);
+w.print();
 }
 
 // 🔥 تكبير الصورة
@@ -188,7 +234,6 @@ let w = window.open("");
 w.document.write(`<img src="${src}" style="width:100%">`);
 }
 
-// تشغيل أولي
 loadPatients();
 
 </script>
