@@ -38,6 +38,7 @@ border-radius:8px;
 cursor:pointer;
 display:flex;
 justify-content:space-between;
+font-size:18px;
 }
 
 img{
@@ -64,7 +65,7 @@ cursor:pointer;
 
 <button onclick="changeLogin()">⚙️ تغيير اليوزر والباس</button>
 
-<input id="search" oninput="loadPatients()" placeholder="بحث">
+<input id="search" oninput="render()" placeholder="بحث">
 
 <h3>إضافة مريض</h3>
 
@@ -93,7 +94,7 @@ cursor:pointer;
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
 apiKey:"AIzaSyCh9CvocS2Ml7Pwowde8SFLwI0dbITLt5E",
@@ -104,7 +105,9 @@ projectId:"delta-care-ff9e4"
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// أول مرة
+let patients = [];
+
+// 🔐 أول مرة
 if(!localStorage.getItem("user")){
 localStorage.setItem("user","admin");
 localStorage.setItem("pass","1234");
@@ -115,9 +118,11 @@ window.login = function(){
 
 if(user.value === localStorage.getItem("user") && pass.value === localStorage.getItem("pass")){
 localStorage.setItem("logged","yes");
+
 loginBox.style.display="none";
 document.getElementById("app").style.display="block";
-loadPatients();
+
+startRealtime();
 }else{
 alert("خطأ");
 }
@@ -125,10 +130,8 @@ alert("خطأ");
 
 // تغيير اليوزر والباس
 window.changeLogin = function(){
-
 let u = prompt("يوزر جديد");
 let p = prompt("باس جديد");
-
 if(u && p){
 localStorage.setItem("user",u);
 localStorage.setItem("pass",p);
@@ -140,14 +143,25 @@ alert("تم التغيير");
 if(localStorage.getItem("logged")==="yes"){
 loginBox.style.display="none";
 document.getElementById("app").style.display="block";
-loadPatients();
+startRealtime();
+}
+
+// 🔥 realtime
+function startRealtime(){
+onSnapshot(collection(db,"patients"), (snap)=>{
+patients = [];
+snap.forEach(d=>{
+patients.push({id:d.id,...d.data()});
+});
+render();
+});
 }
 
 // تحويل صورة
 function toBase64(file){
-return new Promise(resolve=>{
+return new Promise(res=>{
 let r=new FileReader();
-r.onload=()=>resolve(r.result);
+r.onload=()=>res(r.result);
 r.readAsDataURL(file);
 });
 }
@@ -156,7 +170,7 @@ r.readAsDataURL(file);
 window.addPatient = async function(){
 
 let name = document.getElementById("name").value;
-if(!name){ alert("اكتب الاسم"); return; }
+if(!name){alert("اكتب الاسم");return;}
 
 let imgs=[];
 
@@ -178,49 +192,42 @@ notes:notes.value,
 images:imgs,
 sessions:[]
 });
-
-loadPatients();
 }
 
 // عرض
-async function loadPatients(){
+function render(){
 
 list.innerHTML="";
-let s=search.value.toLowerCase();
+let s = search.value.toLowerCase();
 
-let data = await getDocs(collection(db,"patients"));
-
-data.forEach(d=>{
-
-let p = d.data();
-let id = d.id;
+patients.forEach(p=>{
 
 if(!p.name.toLowerCase().includes(s)) return;
 
 list.innerHTML += `
 <div class="card">
 
-<div class="title" onclick="toggle('${id}')">
+<div class="title" onclick="toggle('${p.id}')">
 <span>${p.name}</span>
-<span id="a${id}">⬇</span>
+<span id="a${p.id}">⬇</span>
 </div>
 
-<div class="details" id="${id}">
+<div class="details" id="${p.id}">
 
 <p>العمر: ${p.age}</p>
 <p>الطبيب: ${p.doctor}</p>
 <p>المرض: ${p.disease}</p>
 
 ${(p.images||[]).map(img=>`
-<img src="${img}">
+<img src="${img}" onclick="openImage('${img}')">
 `).join("")}
 
 <br>
 
-<button onclick="deletePatient('${id}')">🗑 حذف</button>
-<button onclick="editPatient('${id}')">✏ تعديل</button>
-<button onclick="addSession('${id}')">➕ جلسة</button>
-<button onclick="printPatient('${id}')">🖨 طباعة</button>
+<button onclick="deletePatient('${p.id}')">🗑 حذف</button>
+<button onclick="editPatient('${p.id}')">✏ تعديل</button>
+<button onclick="addSession('${p.id}')">➕ جلسة</button>
+<button onclick="printPatient('${p.id}')">🖨 طباعة</button>
 
 <div>
 ${(p.sessions||[]).map(s=>`
@@ -235,7 +242,7 @@ ${(p.sessions||[]).map(s=>`
 });
 }
 
-// فتح وغلق
+// toggle
 window.toggle = function(id){
 let d=document.getElementById(id);
 let a=document.getElementById("a"+id);
@@ -247,14 +254,12 @@ a.innerText=d.style.display==="block"?"⬆":"⬇";
 // حذف
 window.deletePatient = async function(id){
 await deleteDoc(doc(db,"patients",id));
-loadPatients();
 }
 
 // تعديل
 window.editPatient = async function(id){
 let name = prompt("اسم جديد");
 await updateDoc(doc(db,"patients",id),{name});
-loadPatients();
 }
 
 // جلسة
@@ -262,34 +267,26 @@ window.addSession = async function(id){
 let date = prompt("تاريخ");
 let price = prompt("سعر");
 
-let data = await getDocs(collection(db,"patients"));
-let p;
-
-data.forEach(d=>{ if(d.id===id) p=d.data(); });
-
+let p = patients.find(x=>x.id===id);
 let sessions = p.sessions || [];
+
 sessions.push({date,price});
 
 await updateDoc(doc(db,"patients",id),{sessions});
-
-loadPatients();
 }
 
 // طباعة
 window.printPatient = function(id){
-
-let cards = document.querySelectorAll(".card");
-let content = "";
-
-cards.forEach(c=>{
-if(c.innerHTML.includes(id)){
-content = c.innerHTML;
-}
-});
-
+let el = document.getElementById(id).innerHTML;
 let w = window.open("");
-w.document.write(content);
+w.document.write(el);
 w.print();
+}
+
+// صورة
+window.openImage = function(src){
+let w = window.open("");
+w.document.write(`<img src="${src}" style="width:100%">`);
 }
 
 </script>
