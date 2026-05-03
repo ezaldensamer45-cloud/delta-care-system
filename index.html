@@ -2,60 +2,22 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>Delta Care System</title>
+<title>Delta Care Hybrid</title>
 
 <style>
-body{
-font-family:Arial;
-background:#0f172a;<!DOCTYPE html>
-<html lang="ar">
-<head>
-<meta charset="UTF-8">
-<title>Delta Care System</title>
-
-<style>
-body{
-font-family:Arial;
-background:#0f172a;
-color:white;
-padding:20px;
-}
-input,button{
-padding:10px;
-margin:5px;
-border-radius:6px;
-border:none;
-}
-button{
-background:#22c55e;
-color:white;
-cursor:pointer;
-}
-.card{
-background:#1e293b;
-padding:10px;
-margin:10px 0;
-border-radius:8px;
-}
-.details{display:none;}
-.title{
-cursor:pointer;
-display:flex;
-justify-content:space-between;
-font-size:18px;
-}
-img{
-width:70px;
-margin:3px;
-border-radius:5px;
-cursor:pointer;
-}
+body{font-family:Arial;background:#0f172a;color:white;padding:20px}
+input,button{padding:10px;margin:5px;border-radius:6px;border:none}
+button{background:#22c55e;color:white;cursor:pointer}
+.card{background:#1e293b;padding:10px;margin:10px 0;border-radius:8px}
+.details{display:none}
+.title{display:flex;justify-content:space-between;cursor:pointer}
+img{width:70px;margin:3px;border-radius:5px;cursor:pointer}
 </style>
 </head>
 
 <body>
 
-<h2>Delta Care System</h2>
+<h2>Delta Care Hybrid</h2>
 
 <div id="loginBox">
 <input id="user" placeholder="user">
@@ -65,25 +27,17 @@ cursor:pointer;
 
 <div id="app" style="display:none">
 
-<button onclick="changeLogin()">⚙️ تغيير اليوزر والباس</button>
-
 <input id="search" oninput="render()" placeholder="بحث">
 
 <h3>إضافة مريض</h3>
 
-<input id="name" placeholder="اسم المريض">
-<input id="age" placeholder="العمر">
-<input id="doctor" placeholder="الطبيب">
-<input id="disease" placeholder="نوع المرض">
-<input id="place" placeholder="مكان المرض">
-<input id="date" type="date">
-<input id="price" placeholder="سعر الجلسة">
-<input id="materials" placeholder="المواد المستخدمة">
-<input id="notes" placeholder="ملاحظات">
+<input id="name" placeholder="اسم">
+<input id="age" placeholder="عمر">
+<input id="doctor" placeholder="طبيب">
 
 <input type="file" id="images" multiple>
 
-<button onclick="addPatient()">➕ إضافة مريض</button>
+<button onclick="addPatient()">➕ إضافة</button>
 
 <hr>
 
@@ -97,59 +51,67 @@ cursor:pointer;
 
 <script>
 
-const firebaseConfig = {
+// 🔐 login ثابت
+const USER="admin";
+const PASS="1234";
+
+function login(){
+if(user.value===USER && pass.value===PASS){
+localStorage.setItem("login","yes");
+loginBox.style.display="none";
+app.style.display="block";
+startSync();
+}else alert("خطأ");
+}
+
+if(localStorage.getItem("login")==="yes"){
+loginBox.style.display="none";
+app.style.display="block";
+startSync();
+}
+
+// 🔥 Firebase
+const firebaseConfig={
 apiKey:"AIzaSyCh9CvocS2Ml7Pwowde8SFLwI0dbITLt5E",
 authDomain:"delta-care-ff9e4.firebaseapp.com",
 projectId:"delta-care-ff9e4"
 };
 
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+const db=firebase.firestore();
 
-let patients=[];
+// 📦 بيانات محلية
+let patients = JSON.parse(localStorage.getItem("patients")) || [];
 
-// login
-if(!localStorage.getItem("user")){
-localStorage.setItem("user","admin");
-localStorage.setItem("pass","1234");
+// 🔁 مزامنة
+function startSync(){
+
+// عرض المحلي فوراً (سريع)
+render();
+
+// جلب من فايربيس
+db.collection("patients").get().then(snap=>{
+snap.forEach(doc=>{
+let data = doc.data();
+
+// منع التكرار
+if(!patients.find(p=>p.id===data.id)){
+patients.push(data);
 }
-
-function login(){
-if(user.value===localStorage.getItem("user") && pass.value===localStorage.getItem("pass")){
-localStorage.setItem("logged","yes");
-loginBox.style.display="none";
-app.style.display="block";
-startRealtime();
-}else alert("خطأ");
-}
-
-function changeLogin(){
-let u=prompt("user");
-let p=prompt("pass");
-if(u&&p){
-localStorage.setItem("user",u);
-localStorage.setItem("pass",p);
-}
-}
-
-if(localStorage.getItem("logged")==="yes"){
-loginBox.style.display="none";
-app.style.display="block";
-startRealtime();
-}
-
-// realtime
-function startRealtime(){
-db.collection("patients").onSnapshot(snap=>{
-patients=[];
-snap.forEach(d=>{
-patients.push({id:d.id,...d.data()});
 });
+
+saveLocal();
 render();
 });
+
 }
 
-// تحويل صورة
+// 💾 حفظ محلي
+function saveLocal(){
+localStorage.setItem("patients",JSON.stringify(patients));
+}
+
+// 📸 تحويل صورة
 function toBase64(file){
 return new Promise(res=>{
 let r=new FileReader();
@@ -158,15 +120,11 @@ r.readAsDataURL(file);
 });
 }
 
-// إضافة
+// ➕ إضافة
 async function addPatient(){
 
-let name = document.getElementById("name").value;
-
-if(!name){
-alert("اكتب الاسم");
-return;
-}
+let name=document.getElementById("name").value;
+if(!name) return alert("اكتب الاسم");
 
 let imgs=[];
 
@@ -174,21 +132,27 @@ for(let f of images.files){
 imgs.push(await toBase64(f));
 }
 
-await db.collection("patients").add({
+let p={
+id:Date.now(),
 name,
 age:age.value,
 doctor:doctor.value,
-disease:disease.value,
-place:place.value,
-date:date.value,
-price:price.value,
-materials:materials.value,
-notes:notes.value,
-images:imgs,
-sessions:[]
-});
+images:imgs
+};
 
-// تنظيف
+// حفظ محلي فوراً
+patients.push(p);
+saveLocal();
+render();
+
+// رفع للفايربيس بالخلفية
+db.collection("patients").add(p);
+
+clear();
+}
+
+// 🧹 تنظيف
+function clear(){
 document.querySelectorAll("input").forEach(i=>i.value="");
 }
 
@@ -200,38 +164,26 @@ let s=search.value.toLowerCase();
 
 patients.forEach(p=>{
 
-if(!p.name || !p.name.toLowerCase().includes(s)) return;
+if(!p.name.toLowerCase().includes(s)) return;
 
 list.innerHTML+=`
 <div class="card">
 
-<div class="title" onclick="toggle('${p.id}')">
+<div class="title" onclick="toggle(${p.id})">
 <span>${p.name}</span>
 <span id="a${p.id}">⬇</span>
 </div>
 
 <div class="details" id="${p.id}">
 
-<p>العمر: ${p.age||""}</p>
-<p>الطبيب: ${p.doctor||""}</p>
-<p>المرض: ${p.disease||""}</p>
+<p>${p.age}</p>
+<p>${p.doctor}</p>
 
 ${(p.images||[]).map(img=>`
 <img src="${img}" onclick="openImage('${img}')">
 `).join("")}
 
-<br>
-
-<button onclick="deletePatient('${p.id}')">🗑 حذف</button>
-<button onclick="editPatient('${p.id}')">✏ تعديل</button>
-<button onclick="addSession('${p.id}')">➕ جلسة</button>
-<button onclick="printPatient('${p.id}')">🖨 طباعة</button>
-
-<div>
-${(p.sessions||[]).map(s=>`
-<div>📅 ${s.date} - 💰 ${s.price}</div>
-`).join("")}
-</div>
+<button onclick="deletePatient(${p.id})">🗑 حذف</button>
 
 </div>
 </div>
@@ -248,336 +200,22 @@ a.innerText=d.style.display==="block"?"⬆":"⬇";
 }
 
 // حذف
-async function deletePatient(id){
-await db.collection("patients").doc(id).delete();
-}
+function deletePatient(id){
+patients = patients.filter(p=>p.id!==id);
+saveLocal();
+render();
 
-// تعديل
-async function editPatient(id){
-let name=prompt("اسم جديد");
-if(name){
-await db.collection("patients").doc(id).update({name});
-}
-}
-
-// جلسة
-async function addSession(id){
-let date=prompt("تاريخ");
-let price=prompt("سعر");
-
-let docRef=db.collection("patients").doc(id);
-let docSnap=await docRef.get();
-
-let sessions=docSnap.data().sessions||[];
-sessions.push({date,price});
-
-await docRef.update({sessions});
-}
-
-// طباعة
-function printPatient(id){
-let p=patients.find(x=>x.id===id);
-
-let w=window.open("");
-w.document.write(`
-<h2>${p.name}</h2>
-<p>العمر: ${p.age}</p>
-<p>الطبيب: ${p.doctor}</p>
-`);
-w.print();
+// حذف من فايربيس
+db.collection("patients").where("id","==",id).get().then(snap=>{
+snap.forEach(doc=>{
+doc.ref.delete();
+});
+});
 }
 
 // صورة
 function openImage(src){
 let w=window.open("");
-w.document.write(`<img src="${src}" style="width:100%">`);
-}
-
-</script>
-
-</body>
-</html>
-color:white;
-padding:20px;
-}
-
-input,button{
-padding:10px;
-margin:5px;
-border-radius:6px;
-border:none;
-}
-
-button{
-background:#22c55e;
-color:white;
-cursor:pointer;
-}
-
-.card{
-background:#1e293b;
-padding:10px;
-margin:10px 0;
-border-radius:8px;
-}
-
-.details{display:none;}
-
-.title{
-cursor:pointer;
-display:flex;
-justify-content:space-between;
-font-size:18px;
-}
-
-img{
-width:70px;
-margin:3px;
-border-radius:5px;
-cursor:pointer;
-}
-</style>
-</head>
-
-<body>
-
-<h2>Delta Care System</h2>
-
-<!-- LOGIN -->
-<div id="loginBox">
-<input id="user" placeholder="user">
-<input id="pass" type="password" placeholder="pass">
-<button onclick="login()">دخول</button>
-</div>
-
-<div id="app" style="display:none">
-
-<button onclick="changeLogin()">⚙️ تغيير اليوزر والباس</button>
-
-<input id="search" oninput="render()" placeholder="بحث">
-
-<h3>إضافة مريض</h3>
-
-<input id="name" placeholder="اسم المريض">
-<input id="age" placeholder="العمر">
-<input id="doctor" placeholder="الطبيب">
-<input id="disease" placeholder="نوع المرض">
-<input id="place" placeholder="مكان المرض">
-<input id="date" type="date">
-<input id="price" placeholder="سعر الجلسة">
-<input id="materials" placeholder="المواد المستخدمة">
-<input id="notes" placeholder="ملاحظات">
-
-<br>
-<input type="file" id="images" multiple>
-<br>
-
-<button onclick="addPatient()">➕ إضافة مريض</button>
-
-<hr>
-
-<div id="list"></div>
-
-</div>
-
-<script type="module">
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-const appFirebase = initializeApp({
-apiKey:"AIzaSyCh9CvocS2Ml7Pwowde8SFLwI0dbITLt5E",
-authDomain:"delta-care-ff9e4.firebaseapp.com",
-projectId:"delta-care-ff9e4"
-});
-
-const db = getFirestore(appFirebase);
-
-let patients = [];
-
-// 🔐 أول مرة
-if(!localStorage.getItem("user")){
-localStorage.setItem("user","admin");
-localStorage.setItem("pass","1234");
-}
-
-// تسجيل دخول
-window.login = function(){
-if(user.value === localStorage.getItem("user") && pass.value === localStorage.getItem("pass")){
-localStorage.setItem("logged","yes");
-loginBox.style.display="none";
-app.style.display="block";
-startRealtime();
-}else{
-alert("خطأ");
-}
-}
-
-// تغيير بيانات الدخول
-window.changeLogin = function(){
-let u = prompt("يوزر جديد");
-let p = prompt("باس جديد");
-if(u && p){
-localStorage.setItem("user",u);
-localStorage.setItem("pass",p);
-alert("تم التغيير");
-}
-}
-
-// حفظ الدخول
-if(localStorage.getItem("logged")==="yes"){
-loginBox.style.display="none";
-app.style.display="block";
-startRealtime();
-}
-
-// 🔥 realtime
-function startRealtime(){
-onSnapshot(collection(db,"patients"), snap=>{
-patients=[];
-snap.forEach(d=>{
-patients.push({id:d.id,...d.data()});
-});
-render();
-});
-}
-
-// تحويل صورة
-function toBase64(file){
-return new Promise(res=>{
-let r=new FileReader();
-r.onload=()=>res(r.result);
-r.readAsDataURL(file);
-});
-}
-
-// ➕ إضافة
-window.addPatient = async function(){
-
-let name = document.getElementById("name").value;
-if(!name){alert("اكتب الاسم");return;}
-
-let imgs=[];
-let files = document.getElementById("images").files;
-
-for(let f of files){
-let b=await toBase64(f);
-imgs.push(b);
-}
-
-await addDoc(collection(db,"patients"),{
-name,
-age:document.getElementById("age").value,
-doctor:document.getElementById("doctor").value,
-disease:document.getElementById("disease").value,
-place:document.getElementById("place").value,
-date:document.getElementById("date").value,
-price:document.getElementById("price").value,
-materials:document.getElementById("materials").value,
-notes:document.getElementById("notes").value,
-images:imgs,
-sessions:[]
-});
-
-// تنظيف
-document.querySelectorAll("input").forEach(i=>i.value="");
-}
-
-// عرض
-function render(){
-
-list.innerHTML="";
-let s = search.value.toLowerCase();
-
-patients.forEach(p=>{
-
-if(!p.name.toLowerCase().includes(s)) return;
-
-list.innerHTML += `
-<div class="card">
-
-<div class="title" onclick="toggle('${p.id}')">
-<span>${p.name}</span>
-<span id="a${p.id}">⬇</span>
-</div>
-
-<div class="details" id="${p.id}">
-
-<p>العمر: ${p.age}</p>
-<p>الطبيب: ${p.doctor}</p>
-<p>المرض: ${p.disease}</p>
-
-${(p.images||[]).map(img=>`
-<img src="${img}" onclick="openImage('${img}')">
-`).join("")}
-
-<br>
-
-<button onclick="deletePatient('${p.id}')">🗑 حذف</button>
-<button onclick="editPatient('${p.id}')">✏ تعديل</button>
-<button onclick="addSession('${p.id}')">➕ جلسة</button>
-<button onclick="printPatient('${p.id}')">🖨 طباعة</button>
-
-<div>
-${(p.sessions||[]).map(s=>`
-<div>📅 ${s.date} - 💰 ${s.price}</div>
-`).join("")}
-</div>
-
-</div>
-
-</div>
-`;
-});
-}
-
-// toggle
-window.toggle = function(id){
-let d=document.getElementById(id);
-let a=document.getElementById("a"+id);
-
-d.style.display=d.style.display==="block"?"none":"block";
-a.innerText=d.style.display==="block"?"⬆":"⬇";
-}
-
-// حذف
-window.deletePatient = async function(id){
-await deleteDoc(doc(db,"patients",id));
-}
-
-// تعديل
-window.editPatient = async function(id){
-let name = prompt("اسم جديد");
-if(!name) return;
-await updateDoc(doc(db,"patients",id),{name});
-}
-
-// جلسة
-window.addSession = async function(id){
-let date = prompt("تاريخ");
-let price = prompt("سعر");
-
-if(!date) return;
-
-let p = patients.find(x=>x.id===id);
-let sessions = p.sessions || [];
-
-sessions.push({date,price});
-
-await updateDoc(doc(db,"patients",id),{sessions});
-}
-
-// طباعة
-window.printPatient = function(id){
-let content = document.getElementById(id).innerHTML;
-let w = window.open("");
-w.document.write(content);
-w.print();
-}
-
-// صورة
-window.openImage = function(src){
-let w = window.open("");
 w.document.write(`<img src="${src}" style="width:100%">`);
 }
 
