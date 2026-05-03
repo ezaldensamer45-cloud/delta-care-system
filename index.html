@@ -7,7 +7,296 @@
 <style>
 body{
 font-family:Arial;
+background:#0f172a;<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>Delta Care System</title>
+
+<style>
+body{
+font-family:Arial;
 background:#0f172a;
+color:white;
+padding:20px;
+}
+input,button{
+padding:10px;
+margin:5px;
+border-radius:6px;
+border:none;
+}
+button{
+background:#22c55e;
+color:white;
+cursor:pointer;
+}
+.card{
+background:#1e293b;
+padding:10px;
+margin:10px 0;
+border-radius:8px;
+}
+.details{display:none;}
+.title{
+cursor:pointer;
+display:flex;
+justify-content:space-between;
+font-size:18px;
+}
+img{
+width:70px;
+margin:3px;
+border-radius:5px;
+cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Delta Care System</h2>
+
+<div id="loginBox">
+<input id="user" placeholder="user">
+<input id="pass" type="password" placeholder="pass">
+<button onclick="login()">دخول</button>
+</div>
+
+<div id="app" style="display:none">
+
+<button onclick="changeLogin()">⚙️ تغيير اليوزر والباس</button>
+
+<input id="search" oninput="render()" placeholder="بحث">
+
+<h3>إضافة مريض</h3>
+
+<input id="name" placeholder="اسم المريض">
+<input id="age" placeholder="العمر">
+<input id="doctor" placeholder="الطبيب">
+<input id="disease" placeholder="نوع المرض">
+<input id="place" placeholder="مكان المرض">
+<input id="date" type="date">
+<input id="price" placeholder="سعر الجلسة">
+<input id="materials" placeholder="المواد المستخدمة">
+<input id="notes" placeholder="ملاحظات">
+
+<input type="file" id="images" multiple>
+
+<button onclick="addPatient()">➕ إضافة مريض</button>
+
+<hr>
+
+<div id="list"></div>
+
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+
+const firebaseConfig = {
+apiKey:"AIzaSyCh9CvocS2Ml7Pwowde8SFLwI0dbITLt5E",
+authDomain:"delta-care-ff9e4.firebaseapp.com",
+projectId:"delta-care-ff9e4"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+let patients=[];
+
+// login
+if(!localStorage.getItem("user")){
+localStorage.setItem("user","admin");
+localStorage.setItem("pass","1234");
+}
+
+function login(){
+if(user.value===localStorage.getItem("user") && pass.value===localStorage.getItem("pass")){
+localStorage.setItem("logged","yes");
+loginBox.style.display="none";
+app.style.display="block";
+startRealtime();
+}else alert("خطأ");
+}
+
+function changeLogin(){
+let u=prompt("user");
+let p=prompt("pass");
+if(u&&p){
+localStorage.setItem("user",u);
+localStorage.setItem("pass",p);
+}
+}
+
+if(localStorage.getItem("logged")==="yes"){
+loginBox.style.display="none";
+app.style.display="block";
+startRealtime();
+}
+
+// realtime
+function startRealtime(){
+db.collection("patients").onSnapshot(snap=>{
+patients=[];
+snap.forEach(d=>{
+patients.push({id:d.id,...d.data()});
+});
+render();
+});
+}
+
+// تحويل صورة
+function toBase64(file){
+return new Promise(res=>{
+let r=new FileReader();
+r.onload=()=>res(r.result);
+r.readAsDataURL(file);
+});
+}
+
+// إضافة
+async function addPatient(){
+
+let name = document.getElementById("name").value;
+
+if(!name){
+alert("اكتب الاسم");
+return;
+}
+
+let imgs=[];
+
+for(let f of images.files){
+imgs.push(await toBase64(f));
+}
+
+await db.collection("patients").add({
+name,
+age:age.value,
+doctor:doctor.value,
+disease:disease.value,
+place:place.value,
+date:date.value,
+price:price.value,
+materials:materials.value,
+notes:notes.value,
+images:imgs,
+sessions:[]
+});
+
+// تنظيف
+document.querySelectorAll("input").forEach(i=>i.value="");
+}
+
+// عرض
+function render(){
+
+list.innerHTML="";
+let s=search.value.toLowerCase();
+
+patients.forEach(p=>{
+
+if(!p.name || !p.name.toLowerCase().includes(s)) return;
+
+list.innerHTML+=`
+<div class="card">
+
+<div class="title" onclick="toggle('${p.id}')">
+<span>${p.name}</span>
+<span id="a${p.id}">⬇</span>
+</div>
+
+<div class="details" id="${p.id}">
+
+<p>العمر: ${p.age||""}</p>
+<p>الطبيب: ${p.doctor||""}</p>
+<p>المرض: ${p.disease||""}</p>
+
+${(p.images||[]).map(img=>`
+<img src="${img}" onclick="openImage('${img}')">
+`).join("")}
+
+<br>
+
+<button onclick="deletePatient('${p.id}')">🗑 حذف</button>
+<button onclick="editPatient('${p.id}')">✏ تعديل</button>
+<button onclick="addSession('${p.id}')">➕ جلسة</button>
+<button onclick="printPatient('${p.id}')">🖨 طباعة</button>
+
+<div>
+${(p.sessions||[]).map(s=>`
+<div>📅 ${s.date} - 💰 ${s.price}</div>
+`).join("")}
+</div>
+
+</div>
+</div>
+`;
+});
+}
+
+// toggle
+function toggle(id){
+let d=document.getElementById(id);
+let a=document.getElementById("a"+id);
+d.style.display=d.style.display==="block"?"none":"block";
+a.innerText=d.style.display==="block"?"⬆":"⬇";
+}
+
+// حذف
+async function deletePatient(id){
+await db.collection("patients").doc(id).delete();
+}
+
+// تعديل
+async function editPatient(id){
+let name=prompt("اسم جديد");
+if(name){
+await db.collection("patients").doc(id).update({name});
+}
+}
+
+// جلسة
+async function addSession(id){
+let date=prompt("تاريخ");
+let price=prompt("سعر");
+
+let docRef=db.collection("patients").doc(id);
+let docSnap=await docRef.get();
+
+let sessions=docSnap.data().sessions||[];
+sessions.push({date,price});
+
+await docRef.update({sessions});
+}
+
+// طباعة
+function printPatient(id){
+let p=patients.find(x=>x.id===id);
+
+let w=window.open("");
+w.document.write(`
+<h2>${p.name}</h2>
+<p>العمر: ${p.age}</p>
+<p>الطبيب: ${p.doctor}</p>
+`);
+w.print();
+}
+
+// صورة
+function openImage(src){
+let w=window.open("");
+w.document.write(`<img src="${src}" style="width:100%">`);
+}
+
+</script>
+
+</body>
+</html>
 color:white;
 padding:20px;
 }
