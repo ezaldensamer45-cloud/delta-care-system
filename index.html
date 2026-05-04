@@ -2,7 +2,7 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>Delta Care System</title>
+<title>Delta Care Final</title>
 
 <style>
 body{font-family:Arial;background:#0f172a;color:white;padding:20px}
@@ -18,7 +18,7 @@ img{width:70px;margin:3px;border-radius:5px;cursor:pointer}
 </head>
 <body>
 
-<h2>Delta Care System</h2>
+<h2>Delta Care Final</h2>
 
 <input id="search" placeholder="بحث" oninput="loadPatients()">
 
@@ -61,26 +61,30 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ➕ ADD
+// ================= ADD =================
 window.addPatient = function(){
 
 let name = document.getElementById("name").value;
-let age = document.getElementById("age").value;
-let doctor = document.getElementById("doctor").value;
-let disease = document.getElementById("disease").value;
-let place = document.getElementById("place").value;
-let date = document.getElementById("date").value;
-let price = document.getElementById("price").value;
-let materials = document.getElementById("materials").value;
-let notes = document.getElementById("notes").value;
-
-let files = document.getElementById("images").files;
-let imgs = [];
-
 if(!name){
 alert("اكتب اسم المريض");
 return;
 }
+
+let data = {
+name,
+age: age.value,
+doctor: doctor.value,
+disease: disease.value,
+place: place.value,
+date: date.value,
+price: price.value,
+materials: materials.value,
+notes: notes.value,
+images: [],
+sessions: []
+};
+
+let files = images.files;
 
 if(files.length > 0){
 let count = 0;
@@ -89,7 +93,7 @@ for(let f of files){
 let reader = new FileReader();
 
 reader.onload = function(e){
-imgs.push(e.target.result);
+data.images.push(e.target.result);
 count++;
 
 if(count === files.length){
@@ -104,40 +108,28 @@ save();
 }
 
 async function save(){
-
-await addDoc(collection(db,"patients"),{
-name,
-age,
-doctor,
-disease,
-place,
-date,
-price,
-materials,
-notes,
-images: imgs,
-sessions:[]
-});
-
+await addDoc(collection(db,"patients"), data);
 alert("تمت الإضافة ✅");
 loadPatients();
 }
 }
 
-// 📥 LOAD + SEARCH
+// ================= LOAD =================
 window.loadPatients = async function(){
 
-let s = document.getElementById("search").value.toLowerCase();
 let list = document.getElementById("list");
+let search = document.getElementById("search").value.toLowerCase();
+
 list.innerHTML = "";
 
-let data = await getDocs(collection(db,"patients"));
+let snap = await getDocs(collection(db,"patients"));
 
-data.forEach(d=>{
-let p = d.data();
-let id = d.id;
+snap.forEach(docSnap=>{
 
-if(!p.name.toLowerCase().includes(s)) return;
+let p = docSnap.data();
+let id = docSnap.id;
+
+if(!p.name.toLowerCase().includes(search)) return;
 
 list.innerHTML += `
 <div class="card">
@@ -149,18 +141,16 @@ list.innerHTML += `
 
 <div class="details" id="${id}">
 
-<p>👤 العمر: ${p.age || ""}</p>
-<p>🩺 الطبيب: ${p.doctor || ""}</p>
-<p>🦠 المرض: ${p.disease || ""}</p>
-<p>📍 المكان: ${p.place || ""}</p>
-<p>📅 التاريخ: ${p.date || ""}</p>
-<p>💰 السعر: ${p.price || ""}</p>
-<p>🧪 المواد: ${p.materials || ""}</p>
-<p>📝 ملاحظات: ${p.notes || ""}</p>
+<p>👤 ${p.age}</p>
+<p>🩺 ${p.doctor}</p>
+<p>🦠 ${p.disease}</p>
+<p>📍 ${p.place}</p>
+<p>📅 ${p.date}</p>
+<p>💰 ${p.price}</p>
+<p>🧪 ${p.materials}</p>
+<p>📝 ${p.notes}</p>
 
-<div>
 ${(p.images||[]).map(i=>`<img src="${i}" onclick="openImage('${i}')">`).join("")}
-</div>
 
 <br>
 
@@ -177,10 +167,11 @@ ${(p.sessions||[]).map(s=>`<div>📅 ${s.date} - 💰 ${s.price}</div>`).join(""
 
 </div>
 `;
+
 });
 }
 
-// 🔽 TOGGLE
+// ================= TOGGLE =================
 window.toggle = function(id){
 let el = document.getElementById(id);
 let arrow = document.getElementById("a"+id);
@@ -194,13 +185,13 @@ arrow.innerText="⬆";
 }
 }
 
-// 🗑 DELETE
+// ================= DELETE =================
 window.deletePatient = async function(id){
 await deleteDoc(doc(db,"patients",id));
 loadPatients();
 }
 
-// ✏ EDIT
+// ================= EDIT =================
 window.editPatient = async function(id){
 let name = prompt("اسم جديد");
 let age = prompt("عمر جديد");
@@ -209,17 +200,17 @@ await updateDoc(doc(db,"patients",id),{name,age});
 loadPatients();
 }
 
-// ➕ SESSION
+// ================= SESSION =================
 window.addSession = async function(id){
 
-let date = prompt("تاريخ الجلسة");
-let price = prompt("سعر الجلسة");
+let date = prompt("تاريخ");
+let price = prompt("سعر");
 
 let snap = await getDocs(collection(db,"patients"));
 let p;
 
 snap.forEach(d=>{
-if(d.id === id) p = d.data();
+if(d.id===id) p=d.data();
 });
 
 let sessions = p.sessions || [];
@@ -229,7 +220,7 @@ await updateDoc(doc(db,"patients",id),{sessions});
 loadPatients();
 }
 
-// 🖨 PRINT
+// ================= PRINT =================
 window.printPatient = function(id){
 let content = document.getElementById(id).innerHTML;
 let w = window.open("");
@@ -237,11 +228,14 @@ w.document.write(content);
 w.print();
 }
 
-// 🖼 IMAGE VIEW
+// ================= IMAGE =================
 window.openImage = function(src){
 let w = window.open("");
 w.document.write(`<img src="${src}" style="width:100%">`);
 }
+
+// 🔥 أهم سطر
+loadPatients();
 
 </script>
 
