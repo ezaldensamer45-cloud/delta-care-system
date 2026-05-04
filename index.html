@@ -2,17 +2,16 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>Delta Care</title>
+<title>Delta Care Stable</title>
 
 <style>
 body{background:#0f172a;color:white;font-family:Arial;padding:20px}
 input,button{padding:10px;margin:5px;border-radius:6px;border:none}
-button{background:#22c55e;color:white}
+button{background:#22c55e;color:white;cursor:pointer}
 .card{background:#1e293b;padding:10px;margin:10px 0;border-radius:8px}
-.details{display:none}
 </style>
-
 </head>
+
 <body>
 
 <h2>Delta Care</h2>
@@ -21,20 +20,8 @@ button{background:#22c55e;color:white}
 
 <h3>إضافة مريض</h3>
 
-<input id="name" placeholder="اسم">
-<input id="age" placeholder="عمر">
-<input id="doctor" placeholder="طبيب">
-
-<input id="disease" placeholder="مرض">
-<input id="place" placeholder="مكان">
-
-<input id="date" type="date">
-<input id="price" placeholder="سعر">
-
-<input id="materials" placeholder="مواد">
-<input id="notes" placeholder="ملاحظات">
-
-<input type="file" id="images" multiple>
+<input id="name" placeholder="اسم المريض">
+<input id="age" placeholder="العمر">
 
 <button onclick="addPatient()">➕ إضافة</button>
 
@@ -45,52 +32,84 @@ button{background:#22c55e;color:white}
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-apiKey: "AIzaSyCh9CvocS2Ml7Pwowde8SFLwI0dbITLt5E",
-authDomain: "delta-care-ff9e4.firebaseapp.com",
-projectId: "delta-care-ff9e4"
+  apiKey: "AIzaSyCh9CvocS2Ml7Pwowde8SFLwI0dbITLt5E",
+  authDomain: "delta-care-ff9e4.firebaseapp.com",
+  projectId: "delta-care-ff9e4"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ADD
+const col = collection(db,"patients");
+
+// ================= ADD =================
 window.addPatient = async function(){
 
-let name = nameInput.value;
-if(!name){alert("اكتب اسم");return;}
+  let name = document.getElementById("name").value.trim();
+  let age = document.getElementById("age").value.trim();
 
-await addDoc(collection(db,"patients"),{
-name,
-age:age.value
-});
+  if(!name){
+    alert("اكتب اسم المريض");
+    return;
+  }
 
-alert("تمت الإضافة");
-
-loadPatients();
+  try{
+    await addDoc(col,{ name, age });
+    alert("تمت الإضافة ✅");
+    loadPatients();
+  }catch(e){
+    console.error(e);
+    alert("فشل الحفظ ❌");
+  }
 }
 
-// LOAD
+// ================= LOAD =================
 window.loadPatients = async function(){
 
-let list = document.getElementById("list");
-list.innerHTML = "";
+  let list = document.getElementById("list");
+  let search = document.getElementById("search").value.toLowerCase();
 
-let snap = await getDocs(collection(db,"patients"));
+  list.innerHTML = "جاري التحميل...";
 
-snap.forEach(d=>{
-let p = d.data();
+  try{
+    let snap = await getDocs(col);
 
-list.innerHTML += `
-<div class="card">
-${p.name} - ${p.age}
-</div>
-`;
-});
+    let html = "";
+
+    snap.forEach(docSnap=>{
+      let p = docSnap.data();
+      let id = docSnap.id;
+
+      if(!p.name.toLowerCase().includes(search)) return;
+
+      html += `
+      <div class="card">
+        ${p.name} - ${p.age || ""}
+
+        <br><br>
+        <button onclick="deletePatient('${id}')">🗑 حذف</button>
+      </div>
+      `;
+    });
+
+    list.innerHTML = html || "ماكو بيانات";
+
+  }catch(e){
+    console.error(e);
+    list.innerHTML = "خطأ بتحميل البيانات ❌";
+  }
 }
 
+// ================= DELETE =================
+window.deletePatient = async function(id){
+  await deleteDoc(doc(db,"patients",id));
+  loadPatients();
+}
+
+// 🔥 تشغيل أول مرة
 loadPatients();
 
 </script>
