@@ -2,7 +2,7 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>Delta Care Stable</title>
+<title>Delta Care FIXED</title>
 
 <style>
 body{background:#0f172a;color:white;font-family:Arial;padding:20px}
@@ -20,8 +20,8 @@ button{background:#22c55e;color:white;cursor:pointer}
 
 <h3>إضافة مريض</h3>
 
-<input id="name" placeholder="اسم المريض">
-<input id="age" placeholder="العمر">
+<input id="name" placeholder="اسم">
+<input id="age" placeholder="عمر">
 
 <button onclick="addPatient()">➕ إضافة</button>
 
@@ -29,87 +29,71 @@ button{background:#22c55e;color:white;cursor:pointer}
 
 <div id="list"></div>
 
-<script type="module">
+<!-- Firebase CDN -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+<script>
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCh9CvocS2Ml7Pwowde8SFLwI0dbITLt5E",
-  authDomain: "delta-care-ff9e4.firebaseapp.com",
-  projectId: "delta-care-ff9e4"
+apiKey: "AIzaSyCh9CvocS2Ml7Pwowde8SFLwI0dbITLt5E",
+authDomain: "delta-care-ff9e4.firebaseapp.com",
+projectId: "delta-care-ff9e4"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-const col = collection(db,"patients");
+// ADD
+function addPatient(){
 
-// ================= ADD =================
-window.addPatient = async function(){
+let name = document.getElementById("name").value;
+let age = document.getElementById("age").value;
 
-  let name = document.getElementById("name").value.trim();
-  let age = document.getElementById("age").value.trim();
-
-  if(!name){
-    alert("اكتب اسم المريض");
-    return;
-  }
-
-  try{
-    await addDoc(col,{ name, age });
-    alert("تمت الإضافة ✅");
-    loadPatients();
-  }catch(e){
-    console.error(e);
-    alert("فشل الحفظ ❌");
-  }
+if(!name){
+alert("اكتب اسم");
+return;
 }
 
-// ================= LOAD =================
-window.loadPatients = async function(){
-
-  let list = document.getElementById("list");
-  let search = document.getElementById("search").value.toLowerCase();
-
-  list.innerHTML = "جاري التحميل...";
-
-  try{
-    let snap = await getDocs(col);
-
-    let html = "";
-
-    snap.forEach(docSnap=>{
-      let p = docSnap.data();
-      let id = docSnap.id;
-
-      if(!p.name.toLowerCase().includes(search)) return;
-
-      html += `
-      <div class="card">
-        ${p.name} - ${p.age || ""}
-
-        <br><br>
-        <button onclick="deletePatient('${id}')">🗑 حذف</button>
-      </div>
-      `;
-    });
-
-    list.innerHTML = html || "ماكو بيانات";
-
-  }catch(e){
-    console.error(e);
-    list.innerHTML = "خطأ بتحميل البيانات ❌";
-  }
+db.collection("patients").add({
+name:name,
+age:age
+}).then(()=>{
+alert("تمت الإضافة ✅");
+loadPatients();
+}).catch(err=>{
+alert("خطأ بالحفظ ❌");
+console.log(err);
+});
 }
 
-// ================= DELETE =================
-window.deletePatient = async function(id){
-  await deleteDoc(doc(db,"patients",id));
-  loadPatients();
+// LOAD
+function loadPatients(){
+
+let list = document.getElementById("list");
+list.innerHTML = "جاري التحميل...";
+
+db.collection("patients").get()
+.then(snapshot=>{
+
+let html = "";
+
+snapshot.forEach(doc=>{
+let p = doc.data();
+
+html += `<div class="card">${p.name} - ${p.age}</div>`;
+});
+
+list.innerHTML = html || "ماكو بيانات";
+
+})
+.catch(err=>{
+list.innerHTML = "❌ خطأ تحميل البيانات";
+console.log(err);
+});
 }
 
-// 🔥 تشغيل أول مرة
+// تشغيل أول مرة
 loadPatients();
 
 </script>
