@@ -1,115 +1,31 @@
-<!DOCTYPE html>
-<html lang="ar">
-<head>
-<meta charset="UTF-8">
-<title>Delta Care System</title>
-
-<style>
-body{
-font-family:Arial;
-background:#0f172a;
-color:white;
-padding:20px;
-}
-
-input,button{
-padding:10px;
-margin:5px;
-border-radius:6px;
-border:none;
-}
-
-button{
-background:#22c55e;
-color:white;
-cursor:pointer;
-}
-
-.card{
-background:#1e293b;
-padding:10px;
-margin:10px 0;
-border-radius:8px;
-}
-
-.details{
-display:none;
-margin-top:10px;
-}
-
-img{
-width:70px;
-margin:3px;
-border-radius:5px;
-}
-</style>
-
-</head>
-<body>
-
-<img src="file_00000000facc7246b6da64fac183c4f1.jpg" width="120">
-
-<h2>Delta Care System</h2>
-
-<h3>إضافة مريض</h3>
-
-<input id="name" placeholder="اسم المريض">
-<input id="age" placeholder="العمر">
-<input id="doctor" placeholder="الطبيب">
-<input id="disease" placeholder="نوع المرض">
-<input id="place" placeholder="مكان المرض">
-<input id="date" type="date">
-<input id="price" placeholder="سعر الجلسة">
-<input id="materials" placeholder="المواد المستخدمة">
-<input id="notes" placeholder="ملاحظات">
-
-<br>
-
-<input type="file" id="images" multiple>
-
-<br>
-
-<button onclick="addPatient()" style="background:#16a34a;font-weight:bold">
-➕ إضافة مريض
-</button>
-
-<hr>
-
-<input id="search" oninput="display()" placeholder="بحث">
-
-<div id="list"></div>
-
 <script>
 
 let patients = JSON.parse(localStorage.getItem("patients")) || [];
 
-// ADD
+// ================= ADD =================
 function addPatient(){
 
-let name = document.getElementById("name").value.trim();
+let p = {
+name: document.getElementById("name").value.trim(),
+age: document.getElementById("age").value,
+doctor: document.getElementById("doctor").value,
+disease: document.getElementById("disease").value,
+place: document.getElementById("place").value,
+date: document.getElementById("date").value,
+price: document.getElementById("price").value,
+materials: document.getElementById("materials").value,
+notes: document.getElementById("notes").value,
+images: [],
+sessions: []
+};
 
-if(name === ""){
+if(p.name === ""){
 alert("اكتب اسم المريض");
 return;
 }
 
-let patient = {
-name: name,
-age: document.getElementById("age").value
-};
-
-let patients = JSON.parse(localStorage.getItem("patients")) || [];
-
-patients.push(patient);
-
-localStorage.setItem("patients", JSON.stringify(patients));
-
-alert("تمت الإضافة ✅");
-
-location.reload();
-}
-
-let files = images.files;
+// 📸 قراءة الصور
+let files = document.getElementById("images").files;
 
 if(files.length === 0){
 save(p);
@@ -118,7 +34,8 @@ return;
 
 let count = 0;
 
-for(let i=0;i<files.length;i++){
+for(let f of files){
+
 let reader = new FileReader();
 
 reader.onload = function(e){
@@ -130,28 +47,31 @@ save(p);
 }
 };
 
-reader.readAsDataURL(files[i]);
+reader.readAsDataURL(f);
 }
 
 }
 
-// SAVE
+// ================= SAVE =================
 function save(p){
 patients.push(p);
 localStorage.setItem("patients", JSON.stringify(patients));
 display();
 clearFields();
+alert("تمت الإضافة ✅");
 }
 
-// CLEAR
+// ================= CLEAR =================
 function clearFields(){
 document.querySelectorAll("input").forEach(i=>i.value="");
 }
 
-// DISPLAY
+// ================= DISPLAY =================
 function display(){
 
-let s = search.value.toLowerCase();
+let s = document.getElementById("search").value.toLowerCase();
+let list = document.getElementById("list");
+
 list.innerHTML="";
 
 patients
@@ -161,20 +81,20 @@ patients
 list.innerHTML += `
 <div class="card">
 
-<h3 onclick="toggle(this)">${p.name}</h3>
+<h3 onclick="toggle(this)">▶ ${p.name}</h3>
 
 <div class="details">
 
-<p>العمر: ${p.age}</p>
-<p>الطبيب: ${p.doctor}</p>
-<p>المرض: ${p.disease}</p>
-<p>المكان: ${p.place}</p>
-<p>التاريخ: ${p.date}</p>
-<p>السعر: ${p.price}</p>
-<p>المواد: ${p.materials}</p>
-<p>ملاحظات: ${p.notes}</p>
+<p>العمر: ${p.age || "-"}</p>
+<p>الطبيب: ${p.doctor || "-"}</p>
+<p>المرض: ${p.disease || "-"}</p>
+<p>المكان: ${p.place || "-"}</p>
+<p>التاريخ: ${p.date || "-"}</p>
+<p>السعر: ${p.price || "-"}</p>
+<p>المواد: ${p.materials || "-"}</p>
+<p>ملاحظات: ${p.notes || "-"}</p>
 
-${p.images.map(img=>`<img src="${img}">`).join("")}
+${(p.images||[]).map(img=>`<img src="${img}">`).join("")}
 
 <hr>
 
@@ -200,20 +120,20 @@ ${(s.images||[]).map(i=>`<img src="${i}">`).join("")}
 
 }
 
-// TOGGLE
+// ================= TOGGLE =================
 function toggle(el){
 let d = el.parentElement.querySelector(".details");
 d.style.display = d.style.display==="block"?"none":"block";
 }
 
-// DELETE
+// ================= DELETE =================
 function deletePatient(i){
 patients.splice(i,1);
 localStorage.setItem("patients", JSON.stringify(patients));
 display();
 }
 
-// ADD SESSION
+// ================= SESSION =================
 function addSession(i){
 
 let date = prompt("تاريخ الجلسة");
@@ -239,6 +159,8 @@ count++;
 
 if(count === files.length){
 
+if(!patients[i].sessions) patients[i].sessions = [];
+
 patients[i].sessions.push({
 date,price,images:imgs
 });
@@ -257,19 +179,15 @@ reader.readAsDataURL(f);
 input.click();
 }
 
-// PRINT
+// ================= PRINT =================
 function printPatient(i){
-
 let content = document.querySelectorAll(".details")[i].innerHTML;
 let w = window.open("");
 w.document.write(content);
 w.print();
-
 }
 
+// تشغيل
 display();
 
 </script>
-
-</body>
-</html>
