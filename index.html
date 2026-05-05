@@ -1,102 +1,43 @@
-<!DOCTYPE html>
-<html lang="ar">
-<head>
-<meta charset="UTF-8">
-<title>Delta Care FIXED</title>
-
-<style>
-body{background:#0f172a;color:white;font-family:Arial;padding:20px}
-input,button{padding:10px;margin:5px;border-radius:6px;border:none}
-button{background:#22c55e;color:white;cursor:pointer}
-.card{background:#1e293b;padding:10px;margin:10px 0;border-radius:8px}
-</style>
-</head>
-
-<body>
-
-<h2>Delta Care</h2>
-
-<input id="search" placeholder="بحث" oninput="loadPatients()">
-
-<h3>إضافة مريض</h3>
-
-<input id="name" placeholder="اسم">
-<input id="age" placeholder="عمر">
-
-<button onclick="addPatient()">➕ إضافة</button>
-
-<hr>
-
-<div id="list"></div>
-
-<!-- Firebase CDN -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
-<script>
-
-const firebaseConfig = {
-apiKey: "AIzaSyCh9CvocS2Ml7Pwowde8SFLwI0dbITLt5E",
-authDomain: "delta-care-ff9e4.firebaseapp.com",
-projectId: "delta-care-ff9e4"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-// ADD
-function addPatient(){
-
-let name = document.getElementById("name").value;
-let age = document.getElementById("age").value;
-
-if(!name){
-alert("اكتب اسم");
-return;
-}
-
-db.collection("patients").add({
-name:name,
-age:age
-}).then(()=>{
-alert("تمت الإضافة ✅");
-loadPatients();
-}).catch(err=>{
-alert("خطأ بالحفظ ❌");
-console.log(err);
-});
-}
-
-// LOAD
 function loadPatients(){
 
 let list = document.getElementById("list");
 list.innerHTML = "جاري التحميل...";
 
-db.collection("patients").get()
-.then(snapshot=>{
+db.collection("patients").get().then(snapshot=>{
 
 let html = "";
 
-snapshot.forEach(doc=>{
-let p = doc.data();
+snapshot.forEach(docSnap=>{
+let p = docSnap.data();
+let id = docSnap.id;
 
-html += `<div class="card">${p.name} - ${p.age}</div>`;
+html += `
+<div class="card">
+
+<b onclick="toggle('${id}')" style="cursor:pointer">
+▶ ${p.name} - ${p.age || ""}
+</b>
+
+<div id="details-${id}" style="display:none;margin-top:10px">
+
+<p>👨‍⚕️ الطبيب: ${p.doctor || "-"}</p>
+<p>🦠 المرض: ${p.disease || "-"}</p>
+<p>📍 المكان: ${p.place || "-"}</p>
+<p>📅 التاريخ: ${p.date || "-"}</p>
+<p>💰 السعر: ${p.price || "-"}</p>
+<p>🧪 المواد: ${p.materials || "-"}</p>
+
+<button onclick="editPatient('${id}')">✏️ تعديل</button>
+<button onclick="deletePatient('${id}')">🗑 حذف</button>
+
+</div>
+
+</div>
+`;
+
 });
 
 list.innerHTML = html || "ماكو بيانات";
 
-})
-.catch(err=>{
-list.innerHTML = "❌ خطأ تحميل البيانات";
-console.log(err);
 });
 }
-
-// تشغيل أول مرة
-loadPatients();
-
-</script>
-
-</body>
-</html>
