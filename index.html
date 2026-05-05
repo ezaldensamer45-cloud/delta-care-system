@@ -2,13 +2,14 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>Delta Care Pro</title>
+<title>Delta Care Full</title>
 
 <style>
 body{background:#0f172a;color:white;font-family:Arial;padding:20px}
 input,button{padding:10px;margin:5px;border-radius:6px;border:none}
 button{background:#22c55e;color:white;cursor:pointer}
 .card{background:#1e293b;padding:10px;margin:10px 0;border-radius:8px}
+img{border-radius:6px}
 </style>
 </head>
 
@@ -23,11 +24,13 @@ button{background:#22c55e;color:white;cursor:pointer}
 <input id="name" placeholder="اسم">
 <input id="age" placeholder="عمر">
 <input id="doctor" placeholder="الطبيب">
-<input id="disease" placeholder="نوع المرض">
-<input id="place" placeholder="مكان المرض">
+<input id="disease" placeholder="المرض">
+<input id="place" placeholder="المكان">
 <input id="date" type="date">
 <input id="price" placeholder="السعر">
 <input id="materials" placeholder="المواد">
+
+<input type="file" id="images" multiple>
 
 <button onclick="addPatient()">➕ إضافة</button>
 
@@ -42,12 +45,12 @@ button{background:#22c55e;color:white;cursor:pointer}
 <script>
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCh9CvocS2Ml7Pwowde8SFLwI0dbITLt5E",
-  authDomain: "delta-care-ff9e4.firebaseapp.com",
-  projectId: "delta-care-ff9e4",
-  storageBucket: "delta-care-ff9e4.appspot.com",
-  messagingSenderId: "941195755372",
-  appId: "1:941195755372:web:02c1470c4362765c513d49"
+apiKey: "AIzaSyCh9CvocS2Ml7Pwowde8SFLwI0dbITLt5E",
+authDomain: "delta-care-ff9e4.firebaseapp.com",
+projectId: "delta-care-ff9e4",
+storageBucket: "delta-care-ff9e4.appspot.com",
+messagingSenderId: "941195755372",
+appId: "1:941195755372:web:02c1470c4362765c513d49"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -57,14 +60,14 @@ const db = firebase.firestore();
 function addPatient(){
 
 let p = {
-name: document.getElementById("name").value,
-age: document.getElementById("age").value,
-doctor: document.getElementById("doctor").value,
-disease: document.getElementById("disease").value,
-place: document.getElementById("place").value,
-date: document.getElementById("date").value,
-price: document.getElementById("price").value,
-materials: document.getElementById("materials").value
+name: name.value,
+age: age.value,
+doctor: doctor.value,
+disease: disease.value,
+place: place.value,
+date: date.value,
+price: price.value,
+materials: materials.value
 };
 
 if(!p.name){
@@ -72,10 +75,42 @@ alert("اكتب اسم");
 return;
 }
 
-db.collection("patients").add(p).then(()=>{
+let files = document.getElementById("images").files;
+let imgs = [];
+
+if(files.length > 0){
+
+let count = 0;
+
+for(let f of files){
+let reader = new FileReader();
+
+reader.onload = function(e){
+imgs.push(e.target.result);
+count++;
+
+if(count === files.length){
+save();
+}
+};
+
+reader.readAsDataURL(f);
+}
+
+}else{
+save();
+}
+
+function save(){
+db.collection("patients").add({
+...p,
+images: imgs
+}).then(()=>{
 alert("تمت الإضافة ✅");
 loadPatients();
 });
+}
+
 }
 
 // ================= LOAD =================
@@ -99,19 +134,26 @@ if(!p.name.toLowerCase().includes(search)) return;
 html += `
 <div class="card">
 
-<b onclick="toggle('${id}')" style="cursor:pointer">
+<b onclick="toggle('${id}')">
 ▶ ${p.name} - ${p.age || ""}
 </b>
 
 <div id="d-${id}" style="display:none;margin-top:10px">
 
-<p>👨‍⚕️ الطبيب: ${p.doctor || "-"}</p>
-<p>🦠 المرض: ${p.disease || "-"}</p>
-<p>📍 المكان: ${p.place || "-"}</p>
-<p>📅 التاريخ: ${p.date || "-"}</p>
-<p>💰 السعر: ${p.price || "-"}</p>
-<p>🧪 المواد: ${p.materials || "-"}</p>
+<p>👨‍⚕️ ${p.doctor || "-"}</p>
+<p>🦠 ${p.disease || "-"}</p>
+<p>📍 ${p.place || "-"}</p>
+<p>📅 ${p.date || "-"}</p>
+<p>💰 ${p.price || "-"}</p>
+<p>🧪 ${p.materials || "-"}</p>
 
+<div>
+${(p.images||[]).map(img=>`
+<img src="${img}" width="80" onclick="openImage('${img}')">
+`).join("")}
+</div>
+
+<br>
 <button onclick="editPatient('${id}')">✏️ تعديل</button>
 <button onclick="deletePatient('${id}')">🗑 حذف</button>
 
@@ -123,7 +165,11 @@ html += `
 
 list.innerHTML = html || "ماكو بيانات";
 
+}).catch(err=>{
+console.log(err);
+list.innerHTML = "خطأ تحميل ❌";
 });
+
 }
 
 // ================= TOGGLE =================
@@ -156,6 +202,12 @@ age:age
 alert("تم التعديل ✏️");
 loadPatients();
 });
+}
+
+// ================= IMAGE VIEW =================
+function openImage(src){
+let w = window.open("");
+w.document.write(`<img src="${src}" style="width:100%">`);
 }
 
 // تشغيل أول مرة
