@@ -1,3 +1,138 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>Delta Care System</title>
+
+<style>
+body{
+font-family:Arial;
+background:#0f172a;
+color:white;
+margin:0;
+}
+.overlay{
+background:rgba(0,0,0,0.7);
+min-height:100vh;
+padding:20px;
+}
+input{
+padding:8px;
+margin:5px;
+width:180px;
+}
+button{
+padding:8px 15px;
+margin:5px;
+cursor:pointer;
+}
+.card{
+background:#1e293b;
+padding:10px;
+margin:10px 0;
+border-radius:10px;
+}
+</style>
+
+</head>
+<body>
+
+<div class="overlay">
+
+<h2>Delta Care System</h2>
+
+<h3>Add Patient</h3>
+
+<input id="name" placeholder="Name">
+<input id="age" placeholder="Age">
+<input id="doctor" placeholder="Doctor">
+<input id="disease" placeholder="Disease Type">
+<input id="place" placeholder="Disease Location">
+<input id="date" type="date">
+<input id="price" placeholder="Session Price">
+<input id="materials" placeholder="Materials">
+<input id="notes" placeholder="Notes">
+
+<br>
+
+<input type="file" id="images" multiple>
+
+<br>
+
+<button onclick="addPatient()">Add</button>
+
+<hr>
+
+<h3>Search</h3>
+<input id="search" placeholder="Search..." oninput="display()">
+
+<div id="list"></div>
+
+</div>
+
+<script>
+
+let patients = JSON.parse(localStorage.getItem("patients")) || [];
+
+// ================= ADD =================
+function addPatient(){
+
+let name = document.getElementById("name").value.trim();
+
+if(name === ""){
+alert("اكتب الاسم");
+return;
+}
+
+let p = {
+name: name,
+age: document.getElementById("age").value,
+doctor: document.getElementById("doctor").value,
+disease: document.getElementById("disease").value,
+place: document.getElementById("place").value,
+date: document.getElementById("date").value,
+price: document.getElementById("price").value,
+materials: document.getElementById("materials").value,
+notes: document.getElementById("notes").value,
+images: []
+};
+
+let files = document.getElementById("images").files;
+
+if(files.length === 0){
+save(p);
+return;
+}
+
+let count = 0;
+
+for(let f of files){
+
+let reader = new FileReader();
+
+reader.onload = function(e){
+p.images.push(e.target.result);
+count++;
+
+if(count === files.length){
+save(p);
+}
+};
+
+reader.readAsDataURL(f);
+}
+
+}
+
+// ================= SAVE =================
+function save(p){
+patients.push(p);
+localStorage.setItem("patients", JSON.stringify(patients));
+display();
+alert("تم الحفظ ✅");
+}
+
+// ================= DISPLAY =================
 function display(){
 
 let s = document.getElementById("search").value.toLowerCase().trim();
@@ -38,3 +173,28 @@ ${(p.images||[]).map(img=>`<img src="${img}" width="100">`).join("")}
 `;
 });
 }
+
+// ================= TOGGLE =================
+function toggle(i){
+let el = document.getElementById("details-"+i);
+if(el.style.display === "none" || el.style.display === ""){
+el.style.display = "block";
+}else{
+el.style.display = "none";
+}
+}
+
+// ================= DELETE =================
+function deletePatient(i){
+patients.splice(i,1);
+localStorage.setItem("patients", JSON.stringify(patients));
+display();
+}
+
+// تشغيل
+display();
+
+</script>
+
+</body>
+</html>
