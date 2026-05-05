@@ -153,33 +153,42 @@ alert("تم الحفظ ✅");
 
 function display(){
 
-let s = document.getElementById("search").value.toLowerCase();
+let s = document.getElementById("search").value.toLowerCase().trim();
 let list = document.getElementById("list");
 
 list.innerHTML = "";
 
 patients
-.filter(p => p.name.toLowerCase().includes(s))
+.filter(p => (p.name || "").toLowerCase().includes(s))
 .forEach((p,i)=>{
 
 list.innerHTML += `
 <div class="card">
 
-<h3>${p.name}</h3>
+<h3 onclick="toggle(${i})" style="cursor:pointer">
+▶ ${p.name}
+</h3>
 
-<p>Age: ${p.age}</p>
-<p>Doctor: ${p.doctor}</p>
-<p>Disease: ${p.disease}</p>
-<p>Location: ${p.place}</p>
-<p>Date: ${p.date}</p>
-<p>Session: ${p.price}</p>
-<p>Materials: ${p.materials}</p>
-<p>Notes: ${p.notes}</p>
+<div id="details-${i}" style="display:none">
 
-${p.images.map(img=>`<img src="${img}" width="100">`).join("")}
+<p>Age: ${p.age || "-"}</p>
+<p>Doctor: ${p.doctor || "-"}</p>
+<p>Disease: ${p.disease || "-"}</p>
+<p>Location: ${p.place || "-"}</p>
+<p>Date: ${p.date || "-"}</p>
+<p>Session: ${p.price || "-"}</p>
+<p>Materials: ${p.materials || "-"}</p>
+<p>Notes: ${p.notes || "-"}</p>
+
+${(p.images||[]).map(img=>`
+<img src="${img}" width="100" style="cursor:pointer" onclick="openImage('${img}')">
+`).join("")}
 
 <br>
+<button onclick="editPatient(${i})">Edit</button>
 <button onclick="deletePatient(${i})">Delete</button>
+
+</div>
 
 </div>
 `;
@@ -191,7 +200,29 @@ patients.splice(i,1);
 localStorage.setItem("patients", JSON.stringify(patients));
 display();
 }
+function toggle(i){
+let el = document.getElementById("details-"+i);
+el.style.display = el.style.display==="block" ? "none" : "block";
+}
 
+function openImage(src){
+let w = window.open("");
+w.document.write(`<img src="${src}" style="width:100%">`);
+}
+
+function editPatient(i){
+
+let p = patients[i];
+
+p.name = prompt("Name", p.name) || p.name;
+p.age = prompt("Age", p.age) || p.age;
+p.doctor = prompt("Doctor", p.doctor) || p.doctor;
+p.disease = prompt("Disease", p.disease) || p.disease;
+p.place = prompt("Place", p.place) || p.place;
+
+localStorage.setItem("patients", JSON.stringify(patients));
+display();
+}
 display();
 
 </script>
