@@ -1,15 +1,100 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>Delta Care Pro</title>
+
+<style>
+body{background:#0f172a;color:white;font-family:Arial;padding:20px}
+input,button{padding:10px;margin:5px;border-radius:6px;border:none}
+button{background:#22c55e;color:white;cursor:pointer}
+.card{background:#1e293b;padding:10px;margin:10px 0;border-radius:8px}
+</style>
+</head>
+
+<body>
+
+<h2>Delta Care</h2>
+
+<input id="search" placeholder="بحث" oninput="loadPatients()">
+
+<h3>إضافة مريض</h3>
+
+<input id="name" placeholder="اسم">
+<input id="age" placeholder="عمر">
+<input id="doctor" placeholder="الطبيب">
+<input id="disease" placeholder="نوع المرض">
+<input id="place" placeholder="مكان المرض">
+<input id="date" type="date">
+<input id="price" placeholder="السعر">
+<input id="materials" placeholder="المواد">
+
+<button onclick="addPatient()">➕ إضافة</button>
+
+<hr>
+
+<div id="list"></div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCh9CvocS2Ml7Pwowde8SFLwI0dbITLt5E",
+  authDomain: "delta-care-ff9e4.firebaseapp.com",
+  projectId: "delta-care-ff9e4",
+  storageBucket: "delta-care-ff9e4.appspot.com",
+  messagingSenderId: "941195755372",
+  appId: "1:941195755372:web:02c1470c4362765c513d49"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ================= ADD =================
+function addPatient(){
+
+let p = {
+name: document.getElementById("name").value,
+age: document.getElementById("age").value,
+doctor: document.getElementById("doctor").value,
+disease: document.getElementById("disease").value,
+place: document.getElementById("place").value,
+date: document.getElementById("date").value,
+price: document.getElementById("price").value,
+materials: document.getElementById("materials").value
+};
+
+if(!p.name){
+alert("اكتب اسم");
+return;
+}
+
+db.collection("patients").add(p).then(()=>{
+alert("تمت الإضافة ✅");
+loadPatients();
+});
+}
+
+// ================= LOAD =================
 function loadPatients(){
 
 let list = document.getElementById("list");
+let search = document.getElementById("search").value.toLowerCase();
+
 list.innerHTML = "جاري التحميل...";
 
 db.collection("patients").get().then(snapshot=>{
 
 let html = "";
 
-snapshot.forEach(docSnap=>{
-let p = docSnap.data();
-let id = docSnap.id;
+snapshot.forEach(doc=>{
+let p = doc.data();
+let id = doc.id;
+
+if(!p.name.toLowerCase().includes(search)) return;
 
 html += `
 <div class="card">
@@ -18,7 +103,7 @@ html += `
 ▶ ${p.name} - ${p.age || ""}
 </b>
 
-<div id="details-${id}" style="display:none;margin-top:10px">
+<div id="d-${id}" style="display:none;margin-top:10px">
 
 <p>👨‍⚕️ الطبيب: ${p.doctor || "-"}</p>
 <p>🦠 المرض: ${p.disease || "-"}</p>
@@ -34,10 +119,49 @@ html += `
 
 </div>
 `;
-
 });
 
 list.innerHTML = html || "ماكو بيانات";
 
 });
 }
+
+// ================= TOGGLE =================
+function toggle(id){
+let el = document.getElementById("d-"+id);
+el.style.display = el.style.display==="none"?"block":"none";
+}
+
+// ================= DELETE =================
+function deletePatient(id){
+if(confirm("حذف؟")){
+db.collection("patients").doc(id).delete().then(()=>{
+loadPatients();
+});
+}
+}
+
+// ================= EDIT =================
+function editPatient(id){
+
+let name = prompt("اسم جديد");
+let age = prompt("عمر جديد");
+
+if(!name) return;
+
+db.collection("patients").doc(id).update({
+name:name,
+age:age
+}).then(()=>{
+alert("تم التعديل ✏️");
+loadPatients();
+});
+}
+
+// تشغيل أول مرة
+loadPatients();
+
+</script>
+
+</body>
+</html>
